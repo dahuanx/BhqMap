@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 版权信息页·分段卡片底（v0.7.30，版式 B）：2% 白填充 + 1dp 7.5% 白描边 + 11dp 圆角。
+     刻意做得极淡：卡片的作用是**分组**（"开发信息"一块、"版权与数据来源"一块），
+     不是要让人"看见两个盒子"。所以靠 7.5% 的描边勾出轮廓，填充几乎与页底同色。
+     圆角 11dp 比页底的 16dp 小一档 —— 嵌套容器圆角必须小于外层，否则两层圆弧会打架。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/about_card_bg" />
+    <corners android:radius="11dp" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/about_card_line" />
+</shape>

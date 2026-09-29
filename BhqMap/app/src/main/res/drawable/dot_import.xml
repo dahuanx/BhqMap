@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 导入动作行的示例色块（v0.8.0）。对齐 Web 版 .sw-imp：
+     透明底 + 1.6px 虚线沙金边框 —— 沙金复用身份色，不引入新颜色。
+     虚线框的语义：这行既不是"标签样式"（实心块）、也不是"图层"（空心实线框），
+     而是一个**动作**；虚线 = "点了会打开别的东西"（文件选择器）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#00000000" />
+    <stroke
+        android:width="1.5dp"
+        android:color="#FFD9B95C"
+        android:dashWidth="2dp"
+        android:dashGap="2dp" />
+    <corners android:radius="3dp" />
+</shape>

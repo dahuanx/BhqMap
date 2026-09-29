@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 应用图标背景（视觉规范 v1.4 深色版）：军绿黑微渐变底 + 地块网格（取自方向二元素）
+     铺满 108dp 全画布，方形蒙版下吃满整个图标；网格不抢前景。
+     来源：设计交付/图标矢量/dark/ic_launcher_background.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 底色：上浅下深的极浅纵向渐变，增加纵深不抢前景 -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54" android:startY="0"
+                android:endX="54" android:endY="108"
+                android:startColor="#333F20"
+                android:endColor="#2A3419" />
+        </aapt:attr>
+    </path>
+    <!-- 次级地块网格 -->
+    <path
+        android:strokeColor="#9DB06A"
+        android:strokeAlpha="0.10"
+        android:strokeWidth="1"
+        android:pathData="M27,0V108 M81,0V108 M0,27H108 M0,81H108" />
+    <!-- 主路网格（更亮更粗，暗示园区主路） -->
+    <path
+        android:strokeColor="#9DB06A"
+        android:strokeAlpha="0.18"
+        android:strokeWidth="2"
+        android:pathData="M54,0V108 M0,54H108" />
+</vector>

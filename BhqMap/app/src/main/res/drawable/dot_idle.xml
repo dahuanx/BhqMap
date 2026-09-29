@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 闲置地块 · 示例"框体"色块（v0.7.27）：紫罗兰 #B388FF
+     与前三行的实心色块不同，这一枚画成**空心方框** —— 前三项开的是"标签样式"
+     （开了以后名称变成一个颜色），这一项开的是"图层"（开了以后地图上多出一圈框体）。
+     空心 = 框体，这个形状差异本身就说明了语义差别，同时颜色仍与地图上的框体一致。
+
+     为什么选紫：本工程已有五个功能色，沙金/亮橄榄/明黄/卡其白 全挤在 45°~80° 色相段
+     （暖黄绿一脉），湖蓝在 189°。色相空间里最空的一段是 280°~320°，
+     所以第六色取紫 —— 是"离已有五色都最远"的解，不是审美偏好。
+     详见 map/ParcelOverlay.kt 的类注释。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#24B388FF" />
+    <stroke
+        android:width="1.5dp"
+        android:color="#FFB388FF" />
+    <corners android:radius="3dp" />
+    <size
+        android:width="12dp"
+        android:height="12dp" />
+</shape>

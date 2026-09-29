@@ -1,0 +1,34 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 工作区内部与临时产物
+.workbuddy/
+.边合区企业台账.ref/
+.*
+!.gitignore
+
+# 签名密钥与本机配置（绝不公开）
+*.keystore
+*.jks
+local.properties
+
+# 成品 APK（通过 GitHub/Gitee Releases 发布，不进仓库）
+*.apk
+交付包/
+
+# 内部工作文档（施工单、设计交付、底图测试截图）
+*施工单*.md
+设计交付/
+底图实测-*/
+默认视野-*/
+
+# 数据工作副本（已进 BhqMap/app/src/main/assets）
+daolu.kml
+xianzhidikuai.kml
+
+# 构建与验证日志
+build-v*.log*
+sim-v*.txt
+verify-v*.txt
+sha1-result.txt

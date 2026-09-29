@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 开关轨道着色（v1.0；v0.7.27 增补禁用态）
+     关 = 白 25%（深底上呈中性灰，默认态本就次要，不抢注意力）
+     开 = 军绿 #556B2F —— 与右侧主按钮点亮态**完全同色**，强化「按钮亮起 = 这里开了开关」的映射。
+     为什么不用亮橄榄 #9DB06A 做开态：白拇指压在亮橄榄上对比度只有 2.4:1，低于 WCAG 非文本
+     3:1 建议值；改用军绿后白拇指对比度 5.9:1 达标（详见规范文档第 6 节自检表）。
+     另：系统默认 SwitchCompat 是 Material 紫/灰，放进深色玻璃底很突兀，必须覆盖。
+
+     v0.7.27 禁用态（**必须排在第一条**，selector 取首个命中项）：
+       闲置地块图层打开时，三个样式开关被程序置灰（图层互斥）。
+       原先没有 state_enabled="false" 这一项，禁用与启用的**外观完全一样** ——
+       用户会以为"点了没反应"，而不是"此刻不可点"。白 25% → 白 12%，
+       是"还看得见形状、但明显退到背景里"的那一档。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:color="#1FFFFFFF" />
+    <item android:state_checked="true" android:color="#FF556B2F" />
+    <item android:state_pressed="true" android:color="#5CFFFFFF" />
+    <item android:color="#40FFFFFF" />
+</selector>

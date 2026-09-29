@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 闲置厂房 · 示例"图层"色块（v0.7.28）：珊瑚橙 #FF8A65
+     与第四行「闲置地块」同款**空心方框** —— 后两行都是图层开关（开了地图多一层），
+     前三行是标签样式开关（开了名称变个颜色）。
+
+     形状说"这是什么控件"：实心 = 标签样式，空心 = 图层；
+     颜色说"是哪个图层"：紫 = 闲置地块（面），珊瑚橙 = 闲置厂房（点）。
+
+     为什么选珊瑚橙：闲置地块取走 262° 的紫之后，能同时离已有五色（45°~80° 暖黄绿、
+     189° 湖蓝）和紫都远的位置只剩暖橙段。珊瑚橙落在 14°，与最近的沙金差 30°，
+     且一灰一艳、图例上不会认错。详见 map/IdleFactoryOverlay.kt 类注释。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#B3FF8A65" />
+    <stroke
+        android:width="1.5dp"
+        android:color="#FFFF8A65" />
+    <corners android:radius="3dp" />
+    <size
+        android:width="12dp"
+        android:height="12dp" />
+</shape>

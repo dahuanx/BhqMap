@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 应用图标前景（厂顶锚点 · 视觉规范 v1.6 深色版）
+     v1.6 变更：图形整体等比缩小到 0.71 倍，全部落在圆形蒙版安全圆（r33）内，
+     不再被圆角/圆形蒙版裁切；定位标内孔等比补到 r3.57（孔/外径 45.5%）。
+     来源：设计交付/图标矢量/v1.6/dark/ic_launcher_foreground.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 锯齿厂房屋顶（三齿）+ 右侧烟囱 -->
+    <path android:pathData="M33.94,78.28 V57.14 L44.5,65.28 V57.14 L55.07,65.28 V57.14 L65.71,65.28 L65.71,78.28 L67.92,78.28 L67.92,47.07 L74.06,47.07 L74.06,78.28 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54" android:startY="47.07"
+                android:endX="54" android:endY="78.28"
+                android:startColor="#A9BE74"
+                android:endColor="#849948" />
+        </aapt:attr>
+    </path>
+    <!-- 定位标 + r3.57 真镂空内孔（evenOdd） -->
+    <path
+        android:fillType="evenOdd"
+        android:pathData="M55.07,51.43 C49.14,44.93,47.22,41.72,47.22,37.44 a7.85,7.85 0 1 1 15.71,0 C62.92,41.72,61,44.93,55.07,51.43 Z M51.5,37.44 a3.57,3.57 0 1 0 7.14,0 a3.57,3.57 0 1 0 -7.14,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="55.07" android:startY="29.58"
+                android:endX="55.07" android:endY="51.43"
+                android:startColor="#EAD087"
+                android:endColor="#D2AC4B" />
+        </aapt:attr>
+    </path>
+    <!-- 玻璃高光弧（定位标左上） -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeAlpha="0.45"
+        android:strokeWidth="1.57"
+        android:strokeLineCap="round"
+        android:pathData="M49.22,37.44 A5.85,5.85 0 0 1 55.07,31.58" />
+</vector>

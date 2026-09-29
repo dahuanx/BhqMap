@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>边合区产业地图</title>
+  <link rel="stylesheet" href="lib/leaflet.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="map"></div>
+  <canvas id="labels"></canvas>
+
+  <!-- 右下角按钮组：控制面板入口（App btnCoop 同位） -->
+  <div class="btn-stack">
+    <button id="btnCoop" class="fab" title="显示控制">☰</button>
+  </div>
+  <div id="tvVersion" title="点击看版权信息 · 长按看校准读数">Web v0.2.0</div>
+
+  <!-- 显示控制浮层（App 五行浮层：三样式开关 + 两图层行，三态互斥） -->
+  <div id="panel">
+    <div class="row" id="rowCoop">
+      <span class="swatch sw-coop"></span>
+      <span class="lbl">协作区项目</span>
+      <label class="switch"><input type="checkbox" id="swCoop"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="row" id="rowPark">
+      <span class="swatch sw-park"></span>
+      <span class="lbl">园区项目</span>
+      <label class="switch"><input type="checkbox" id="swPark"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="row" id="rowAbove">
+      <span class="swatch sw-above"></span>
+      <span class="lbl">规上企业</span>
+      <label class="switch"><input type="checkbox" id="swAbove"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="row" id="rowIdle">
+      <span class="swatch sw-idle"></span>
+      <span class="lbl">闲置地块</span>
+      <label class="switch"><input type="checkbox" id="swIdle"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="row" id="rowFac">
+      <span class="swatch sw-fac"></span>
+      <span class="lbl">闲置厂房</span>
+      <label class="switch"><input type="checkbox" id="swFactory"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="row" id="rowCia">
+      <span class="swatch sw-cia"></span>
+      <span class="lbl">影像注记</span>
+      <label class="switch"><input type="checkbox" id="swCia"><span class="track"></span><span class="thumb"></span></label>
+    </div>
+    <div class="panel-sep"></div>
+    <div class="row row-action" id="rowImport" title="导入《边合区企业台账.xlsx》重建企业数据">
+      <span class="swatch sw-imp"></span>
+      <span class="lbl">导入台账 Excel</span>
+      <span class="imp-arrow">›</span>
+    </div>
+    <div id="impStatus"></div>
+    <input type="file" id="impFile" accept=".xlsx,.xls" style="display:none">
+  </div>
+
+  <!-- 企业详情面板（v0.7.20 三段式：固定头 / 独立滚动简介 / 固定尾） -->
+  <div id="detail">
+    <div class="head">
+      <div class="head-text">
+        <div id="dName"></div>
+        <div id="dBadges"></div>
+        <div id="dBiz"></div>
+      </div>
+      <button id="dClose" title="关闭">✕</button>
+    </div>
+    <div id="dIntroScroll"><div id="dIntro"></div></div>
+    <div id="dCoord"></div>
+  </div>
+
+  <!-- 校准读数（App 长按指北针对应物：Web 为长按版本号） -->
+  <div id="readout">
+    <div class="r-row"><span class="r-k">Zoom</span><span class="r-v" id="rZoom">—</span></div>
+    <div class="r-row"><span class="r-k">分辨率</span><span class="r-v" id="rMpp">—</span></div>
+    <div class="r-row"><span class="r-k">分档</span><span class="r-v" id="rLod">—</span></div>
+    <div class="r-row"><span class="r-k">视野内</span><span class="r-v" id="rVisible">—</span></div>
+    <div class="r-row"><span class="r-k">标签</span><span class="r-v" id="rLabel">—</span></div>
+    <div class="r-row"><span class="r-k">避让弃名</span><span class="r-v" id="rHidden">—</span></div>
+    <div class="r-row"><span class="r-k">路名</span><span class="r-v" id="rRoad">—</span></div>
+    <div class="r-row"><span class="r-k">图层</span><span class="r-v" id="rLayer">—</span></div>
+  </div>
+
+  <!-- 版权信息页（v0.7.30 版式 B 分段卡片式移植；入口 = 点版本号） -->
+  <div id="about">
+    <div id="aboutCard">
+      <div class="about-head">
+        <div class="about-icon">厂</div>
+        <div class="about-title">
+          <div class="app-name">边合区产业地图</div>
+          <div class="app-ver" id="aboutVer"></div>
+        </div>
+      </div>
+      <div class="about-rule"></div>
+      <div class="about-card">
+        <div class="about-section">开 发 信 息</div>
+        <div class="about-line"><span class="k">权益方</span><span class="v" id="aboutOwner"></span></div>
+        <div class="about-sep"></div>
+        <div class="about-line"><span class="k">开发团队</span><span class="v" id="aboutTeam"></span></div>
+        <div class="about-sep"></div>
+        <div class="about-line"><span class="k">开发时间</span><span class="v" id="aboutDate"></span></div>
+      </div>
+      <div class="about-card">
+        <div class="about-section">版 权 与 数 据 来 源</div>
+        <div class="about-body" id="aboutCopyright"></div>
+        <div class="about-note" id="aboutBasemap"></div>
+        <div class="about-note" id="aboutData"></div>
+      </div>
+      <div class="about-footer" id="aboutFooter"></div>
+      <button id="aboutClose">关 闭</button>
+    </div>
+  </div>
+
+  <script src="lib/leaflet.js"></script>
+  <script src="lib/xlsx.full.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="data/data.js"></script>
+  <script src="js/labelengine.js"></script>
+  <script src="js/layers.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 单色主题图标（Android 13 主题图标用，视觉规范 v1.6）
+     v1.6 变更：与彩色层统一几何（彩色层已缩小至安全圆内，v1.5「单色层独立保持安全圆几何」
+     的前提消失），两层形状完全一致，仅填色不同。内孔 r3.57 真镂空。
+     来源：设计交付/图标矢量/v1.6/ic_launcher_monochrome.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M33.94,78.28 V57.14 L44.5,65.28 V57.14 L55.07,65.28 V57.14 L65.71,65.28 L65.71,78.28 L67.92,78.28 L67.92,47.07 L74.06,47.07 L74.06,78.28 Z" />
+    <path
+        android:fillColor="#000000"
+        android:fillType="evenOdd"
+        android:pathData="M55.07,51.43 C49.14,44.93,47.22,41.72,47.22,37.44 a7.85,7.85 0 1 1 15.71,0 C62.92,41.72,61,44.93,55.07,51.43 Z M51.5,37.44 a3.57,3.57 0 1 0 7.14,0 a3.57,3.57 0 1 0 -7.14,0 Z" />
+</vector>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 浮层出场：110ms 淡出 + 滑回按钮方向；出场比进场快，符合「响应快、退场干脆」的手感 -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <alpha
+        android:duration="110"
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0" />
+    <translate
+        android:duration="110"
+        android:fromXDelta="0"
+        android:toXDelta="8%"
+        android:interpolator="@android:interpolator/accelerate_quad" />
+</set>

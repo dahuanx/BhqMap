@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 规上企业 · 示例色块：湖蓝 #5FD0E8
+     与地图上「规上企业全称标签」的文字色一致。
+     湖蓝是全图唯一冷色，也是三项里唯一不用主色系（橄榄）的示例色 —— 故意的：
+     规上企业属统计口径、与园区项目性质不同，用冷色把它和两个「项目」区分开。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF5FD0E8" />
+    <corners android:radius="3dp" />
+    <size
+        android:width="12dp"
+        android:height="12dp" />
+</shape>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 开关拇指着色（v1.0；v0.7.27 增补禁用态）
+     开 = 纯白 #FFFFFF（压在军绿轨道上，对比最清）
+     关 = 卡其白 #F2F0E6（与浮层文字同色，静态时更柔和）
+
+     v0.7.27 禁用态（**排在第一条**）：闲置地块打开时三个样式开关被程序置灰。
+       卡其白压到 40% —— 与轨道的 12% 一起构成"整支开关退到背景"的观感，
+       与"启用但未选中"（白 25% 轨道 + 全亮卡其白拇指）一眼可分。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_enabled="false" android:color="#66F2F0E6" />
+    <item android:state_checked="true" android:color="#FFFFFFFF" />
+    <item android:color="#FFF2F0E6" />
+</selector>

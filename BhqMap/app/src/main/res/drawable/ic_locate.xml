@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 定位：准星圆环 + 四向刻线 + 中心点 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M12,6.5 A5.5,5.5 0 1,1 11.99,6.5 Z"
+        android:strokeColor="#F2F0E6"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M12,2.5 L12,4.5"
+        android:strokeColor="#F2F0E6"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M12,19.5 L12,21.5"
+        android:strokeColor="#F2F0E6"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M2.5,12 L4.5,12"
+        android:strokeColor="#F2F0E6"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M19.5,12 L21.5,12"
+        android:strokeColor="#F2F0E6"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M12,11 a1,1 0 1,0 0.001,0 Z"
+        android:fillColor="#F2F0E6" />
+</vector>

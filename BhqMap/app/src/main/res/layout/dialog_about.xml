@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 版权信息页（v0.7.30，洲哥选定「版式 B · 分段卡片式」）
+
+     入口：右下角版本号（activity_main.xml 的 tvVersion）点击弹出。
+     承载：AlertDialog + 本布局；window 背景在 MainActivity.showAboutDialog 里被设成透明，
+           所以"这一页"的外观**全部由本布局 + bg_dialog_about 决定**，不受系统主题影响
+           （浅色系统下也不会变成白底黑字 —— 全页文字颜色都显式指定）。
+
+     结构（版式 B 的四段，自上而下）：
+       ① 标题栏   图标 + 应用名 + 版本号
+       ② 通栏线   用负 margin 顶到面板左右边缘（HTML 稿里是 margin:0 -14px）
+       ③ 卡片 ×2  「开发信息」「版权与数据来源」
+       ④ 页脚 ©   + 关闭按钮
+
+     宽度由代码锁死 300dp（见 MainActivity.ABOUT_DIALOG_WIDTH_DP）——
+     所以这里**一律不用 layout_weight 撑宽度**、也不写 0dp 宽度；唯一例外是标题栏
+     文字列与卡内"值"列，它们是 0dp+weight=1，但那是**在已定宽的容器内**分配剩余空间，
+     不再参与"面板多宽"的测量（v0.7.22 浮层满屏贴边的教训就是在这里踩的）。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_about"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="14dp"
+    android:paddingBottom="14dp">
+
+    <!-- ① 标题栏：图标（真实 launcher 图标，圆角裁切）+ 应用名 + 版本号 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="14dp">
+
+        <!-- 56dp 容器装 108dp 画布的自适应图标：图形本身只占画布中间约 4 成
+             （系统留给蒙版裁切的安全区），所以容器要比"看上去想要的大小"放大一档，
+             最终厂顶锚点在屏上约 24dp —— 与桌面图标上的观感一致。
+             clipToOutline 把方形画布裁成 12dp 圆角，与全页圆角语言统一。 -->
+        <ImageView
+            android:id="@+id/ivAboutIcon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_about_icon"
+            android:clipToOutline="true"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/ic_launcher" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.03"
+                android:text="@string/app_name"
+                android:textColor="@color/about_text_title"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- 版本号运行时按 BuildConfig 填充，不手工维护 -->
+            <TextView
+                android:id="@+id/tvAboutVer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:letterSpacing="0.04"
+                android:textColor="@color/about_text_key"
+                android:textSize="11sp"
+                tools:text="v0.7.30 (38)" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ② 通栏线：负 margin 抵消根布局的 14dp 左右内边距，让线通到面板边缘 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="-14dp"
+        android:layout_marginEnd="-14dp"
+        android:background="@color/about_card_line" />
+
+    <!-- ③-1 「开发信息」卡 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_about_card"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="9dp"
+            android:letterSpacing="0.16"
+            android:text="开 发 信 息"
+            android:textColor="@color/about_section"
+            android:textSize="11sp" />
+
+        <!-- 三行「标签 —— 值」。行内用 space-between：标签左、值右。
+             值列 0dp+weight=1 且 textAlignment=viewEnd —— 这样即使将来值变长，
+             它也会在**自己的列内**右对齐换行，不会把标签挤走。 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="true"
+            android:orientation="horizontal"
+            android:paddingBottom="9dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="权益方"
+                android:textColor="@color/about_text_key"
+                android:textSize="11.5sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:lineSpacingExtra="1dp"
+                android:text="绥芬河市边境经济合作区管理局"
+                android:textAlignment="viewEnd"
+                android:textColor="@color/about_text_value"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/about_card_line" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="true"
+            android:orientation="horizontal"
+            android:paddingBottom="9dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="开发团队"
+                android:textColor="@color/about_text_key"
+                android:textSize="11.5sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:lineSpacingExtra="1dp"
+                android:text="2025组团式援边绥芬河工作队"
+                android:textAlignment="viewEnd"
+                android:textColor="@color/about_text_value"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/about_card_line" />
+
+        <!-- 末行不画下分隔线（与 HTML 稿的 :last-child 一致） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="true"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="开发时间"
+                android:textColor="@color/about_text_key"
+                android:textSize="11.5sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:lineSpacingExtra="1dp"
+                android:text="2026 年 9 月"
+                android:textAlignment="viewEnd"
+                android:textColor="@color/about_text_value"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ③-2 「版权与数据来源」卡 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_about_card"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="9dp"
+            android:letterSpacing="0.16"
+            android:text="版 权 与 数 据 来 源"
+            android:textColor="@color/about_section"
+            android:textSize="11sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:lineSpacingExtra="2dp"
+            android:text="本软件著作权归绥芬河市边境经济合作区管理局所有，供园区管理工作内部使用；未经书面许可，不得复制、传播或用于商业用途。"
+            android:textColor="@color/about_text_body"
+            android:textSize="11sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="1dp"
+            android:paddingBottom="8dp"
+            android:text="底图数据来源：国家地理信息公共服务平台「天地图」（审图号 GS(2025)1508号）"
+            android:textColor="@color/about_text_key"
+            android:textSize="11sp" />
+
+        <!-- 数据说明：企业台账性质的免责一句，与底图来源同档字号、同档灰 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="1dp"
+            android:text="企业信息来源于管理局企业台账，仅供工作参考，不作为行政或权属依据。"
+            android:textColor="@color/about_text_key"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- ④ 页脚版权行 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="center"
+        android:letterSpacing="0.05"
+        android:text="© 2026　绥芬河市边境经济合作区管理局"
+        android:textColor="@color/about_text_faint"
+        android:textSize="11sp" />
+
+    <!-- 关闭按钮：描边式次级按钮。三条关闭路径（按钮 / 点面板外 / 返回键）见 showAboutDialog -->
+    <TextView
+        android:id="@+id/btnAboutClose"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_about_btn"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:letterSpacing="0.06"
+        android:text="关闭"
+        android:textColor="@color/about_text_title"
+        android:textSize="14sp" />
+
+</LinearLayout>

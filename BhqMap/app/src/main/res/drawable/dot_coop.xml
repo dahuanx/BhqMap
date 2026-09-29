@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 协作区项目 · 示例色块：沙金 #D9B95C
+     与地图上「协作区项目全称标签」的文字色完全一致 —— 色块的唯一职责就是告知
+     「开了这项，标签会变成这个颜色」，不做装饰用途。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFD9B95C" />
+    <corners android:radius="3dp" />
+    <size
+        android:width="12dp"
+        android:height="12dp" />
+</shape>

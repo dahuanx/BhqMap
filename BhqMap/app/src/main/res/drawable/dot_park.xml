@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 园区项目 · 示例色块：亮橄榄 #9DB06A
+     与地图上「园区项目全称标签」的文字色一致。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF9DB06A" />
+    <corners android:radius="3dp" />
+    <size
+        android:width="12dp"
+        android:height="12dp" />
+</shape>

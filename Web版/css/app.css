@@ -1,0 +1,357 @@
+/* 边合区产业地图 · Web 版样式（P1）
+ * 色板与安卓版视觉规范 v1.18 对齐：
+ *   主色 #556B2F 军绿｜深底 #141608 玻璃｜卡其白 #F2F0E6
+ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  background: #000;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#map { position: absolute; inset: 0; background: #0a0f08; }
+
+/* 标签画布：挂进自定义 pane（z-index 由 pane 控制），
+ * 缩放动画期间由 zoomanim 处理器同步 transform（.leaflet-zoom-animated
+ * 提供 0.25s 过渡 + transform-origin:0 0，与瓦片动画同节奏） */
+#labels {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* 自定义 pane：盖在瓦片(200)之上、popup(700) 之下 */
+.leaflet-labelCanvas-pane { z-index: 450; }
+
+/* ---------------- 右下角按钮组 ---------------- */
+
+.btn-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 64px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.26);
+  background: rgba(20,22,8,0.55);
+  color: #F2F0E6;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.fab:active { background: rgba(20,22,8,0.75); }
+.fab.active { background: #556B2F; border-color: #556B2F; }
+
+/* 版本号（对应安卓 tvVersion，点击出校准读数） */
+#tvVersion {
+  position: fixed;
+  right: 16px;
+  bottom: 20px;
+  z-index: 1000;
+  color: rgba(242,240,230,0.85);
+  font-size: 12px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  cursor: pointer;
+  padding: 4px 6px;   /* 扩大热区，同安卓 v0.7.30 */
+}
+
+/* ---------------- 显示控制浮层（App PopupWindow 同款视觉） ---------------- */
+
+#panel {
+  position: fixed;
+  right: 84px;
+  bottom: 96px;
+  z-index: 1001;
+  width: 176px;                       /* v0.7.22 定稿宽度 */
+  background: #E6141608;              /* 底 #141608 @90% */
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid #26FFFFFF;
+  border-radius: 14px;
+  padding: 8px 12px;
+  display: none;
+}
+#panel.show { display: block; }
+
+#panel .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+#panel .row + .row { border-top: 1px solid rgba(255,255,255,0.08); }
+
+#panel .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;   /* 方形色块（App：用方不用圆，避免与点位撞语义） */
+  flex: none;
+}
+.sw-coop  { background: #D9B95C; }
+.sw-park  { background: #9DB06A; }
+.sw-above { background: #5FD0E8; }
+.sw-idle  { background: transparent; border: 1.6px solid #B388FF; }
+.sw-fac   { background: transparent; border: 1.6px solid #FF8A65; }
+
+#panel .lbl {
+  flex: 1;
+  color: #F2F0E6;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* 拨动开关（军绿开态 = 主按钮点亮态） */
+.switch { position: relative; width: 34px; height: 20px; flex: none; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .track {
+  position: absolute; inset: 0;
+  border-radius: 10px;
+  background: rgba(242,240,230,0.25);
+  transition: background 0.15s;
+}
+.switch .thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #F2F0E6;
+  transition: left 0.15s;
+}
+.switch input:checked + .track { background: #556B2F; }
+.switch input:checked + .track + .thumb { left: 16px; }
+.switch input:disabled + .track { opacity: 0.35; }
+.switch input:disabled + .track + .thumb { opacity: 0.5; }
+
+/* ---------------- 企业详情面板（v0.7.20 三段式） ----------------
+ * 固定头 / 独立滚动简介 / 固定尾。面板上限 360dp（PANEL_MAX_HEIGHT_DP），
+ * 简介区最少 72dp（INTRO_MIN_HEIGHT_DP）—— flex 收紧自然复刻 fitPanelHeight：
+ * 简介短 → 面板贴内容；简介长 → 面板顶到 360px、简介内部滚动。 */
+
+#detail {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  max-width: 420px;
+  max-height: 360px;
+  z-index: 1000;
+  background: rgba(20,22,8,0.92);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 14px 16px 12px;
+  color: #F2F0E6;
+  display: none;
+  flex-direction: column;
+}
+#detail.show { display: flex; }
+
+/* 固定头 */
+#detail .head { display: flex; align-items: flex-start; gap: 10px; flex: none; }
+.head-text { flex: 1; min-width: 0; }
+#dName { font-size: 16px; font-weight: 700; line-height: 1.35; }
+#dClose {
+  border: none; background: none; color: rgba(242,240,230,0.55);
+  font-size: 18px; cursor: pointer; flex: none; line-height: 1;
+}
+#dBadges { margin: 8px 0 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.badge {
+  font-size: 10px;
+  border-radius: 4px;
+  padding: 2px 6px;
+  border: 1px solid;
+}
+.b-gov   { color: #FFD400; border-color: #FFD400; }
+.b-coop  { color: #D9B95C; border-color: #D9B95C; }
+.b-park  { color: #9DB06A; border-color: #9DB06A; }
+.b-key   { color: #F2F0E6; border-color: #F2F0E6; }
+.b-above { color: #5FD0E8; border-color: #5FD0E8; }
+
+#dBiz { font-size: 12px; color: rgba(242,240,230,0.75); line-height: 1.6; }
+
+/* 独立滚动简介区（fitPanelHeight 对应物） */
+#dIntroScroll {
+  flex: 0 1 auto;
+  min-height: 72px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding-right: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+#dIntro p {
+  font-size: 12px;
+  line-height: 1.75;
+  color: rgba(242,240,230,0.82);
+  /* LeadingMarginSpan.Standard(indent,0)：首行缩进 2 字、折行顶格 */
+  text-indent: 2em;
+}
+
+/* 固定尾：坐标行 */
+#dCoord {
+  margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 11px; color: rgba(242,240,230,0.45);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+/* ---------------- 校准读数 ---------------- */
+
+#readout {
+  position: fixed;
+  right: 16px;
+  bottom: 48px;
+  z-index: 1001;
+  width: 190px;
+  background: rgba(20,22,8,0.92);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #F2F0E6;
+  font-size: 12px;
+  display: none;
+}
+#readout.show { display: block; }
+#readout .r-row { display: flex; justify-content: space-between; padding: 3px 0; }
+#readout .r-k { color: rgba(242,240,230,0.55); }
+#readout .r-v { font-variant-numeric: tabular-nums; }
+
+/* Leaflet 比例尺配色微调，贴近深底 */
+.leaflet-control-scale-line {
+  background: rgba(20,22,8,0.55) !important;
+  color: #F2F0E6 !important;
+  border-color: rgba(242,240,230,0.6) !important;
+}
+
+/* ---------------- 版权信息页（v0.7.30 版式 B 分段卡片式移植） ----------------
+ * 结构：标题栏 → 通栏线 → 「开发信息」卡 → 「版权与数据来源」卡 → 页脚 → 关闭按钮。
+ * 遮罩全屏（对应 App 点面板外关闭 = cancelable），卡片宽 300dp，窄屏钳到屏宽−32px。 */
+
+#about {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+#about.show { display: flex; }
+
+#aboutCard {
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: rgba(24,27,12,0.97);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 16px 14px 14px;
+  color: #F2F0E6;
+}
+
+.about-head { display: flex; align-items: center; padding: 0 4px 14px; }
+.about-icon {
+  width: 44px; height: 44px; flex: none;
+  border-radius: 12px;
+  background: #556B2F;
+  color: #F2F0E6;
+  font-size: 22px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.about-title { margin-left: 12px; }
+.app-name { font-size: 16px; font-weight: 700; letter-spacing: 0.03em; }
+.app-ver { margin-top: 2px; font-size: 11px; letter-spacing: 0.04em; color: rgba(242,240,230,0.55); }
+
+.about-rule { height: 1px; background: rgba(255,255,255,0.10); margin: 0 -14px; }
+
+.about-card {
+  margin-top: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 12px;
+}
+.about-section {
+  font-size: 11px; letter-spacing: 0.16em;
+  color: rgba(242,240,230,0.5);
+  margin-bottom: 9px;
+}
+.about-line { display: flex; align-items: baseline; padding-bottom: 9px; }
+.about-line:last-child { padding-bottom: 0; }
+.about-line .k { flex: none; font-size: 11.5px; color: rgba(242,240,230,0.55); }
+.about-line .v {
+  flex: 1; margin-left: 12px; text-align: right;
+  font-size: 12.5px; line-height: 1.5; color: #F2F0E6;
+}
+.about-sep { height: 1px; background: rgba(255,255,255,0.07); margin-bottom: 8px; }
+
+.about-body {
+  font-size: 11px; line-height: 1.8;
+  color: rgba(242,240,230,0.75);
+  margin-bottom: 8px;
+}
+.about-note {
+  font-size: 11px; line-height: 1.8;
+  color: rgba(242,240,230,0.55);
+}
+.about-note + .about-note { padding-top: 4px; }
+
+.about-footer {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 11px; letter-spacing: 0.05em;
+  color: rgba(242,240,230,0.38);
+}
+
+#aboutClose {
+  width: 100%;
+  height: 42px;
+  margin-top: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(242,240,230,0.28);
+  background: none;
+  color: #F2F0E6;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+#aboutClose:active { background: rgba(255,255,255,0.08); }
+
+/* ---------------- P3 追加：cia 开关 / 台账导入行 ---------------- */
+.sw-cia { background: rgba(232,232,232,0.85); border: 1.6px solid rgba(0,0,0,0.55); }
+.sw-imp { background: transparent; border: 1.6px dashed #D9B95C; }
+
+.panel-sep {
+  height: 1px;
+  margin: 3px 0;
+  background: rgba(255,255,255,0.16);
+}
+
+#panel .row-action { cursor: pointer; }
+#panel .row-action:hover { background: rgba(255,255,255,0.06); }
+.imp-arrow { margin-left: auto; color: rgba(242,240,230,0.5); font-size: 14px; }
+
+#impStatus {
+  padding: 4px 12px 8px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: rgba(242,240,230,0.65);
+  display: none;
+}
+#impStatus.show { display: block; }
+#impStatus a { color: #5FD0E8; text-decoration: underline; margin-left: 4px; }

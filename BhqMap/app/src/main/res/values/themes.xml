@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 地图类 App 用 AppCompat 主题即可，不引入 Material 依赖以减小体积 -->
+    <style name="Theme.BhqMap" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#CC0B5D3B</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+    <!-- 显示控制浮层进出场动画（v0.7.19）
+         用法：popup.animationStyle = R.style.PopupAnimBhqMap
+         进 140ms 淡入 + 自按钮方向滑入 8%；出 110ms 反向（退场更干脆）。 -->
+    <style name="PopupAnimBhqMap" parent="">
+        <item name="android:windowEnterAnimation">@anim/popup_in</item>
+        <item name="android:windowExitAnimation">@anim/popup_out</item>
+    </style>
+</resources>

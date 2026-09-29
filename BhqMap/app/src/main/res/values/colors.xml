@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 旧模板图标底色，v1.4 起已由 drawable/ic_launcher_background.xml 矢量背景层替代，此处仅存档 -->
+    <color name="ic_launcher_background">#0B5D3B</color>
+
+    <!-- 悬浮面板：半透明，让底图透出来 -->
+    <color name="panel_bg">#CCFFFFFF</color>
+    <color name="panel_text">#212121</color>
+
+    <!-- 企业详情面板：接近不透明，保证长文本可读 -->
+    <color name="panel_bg_solid">#F2FFFFFF</color>
+
+    <color name="text_primary">#FF1B1B1B</color>
+    <color name="text_secondary">#FF5F5F5F</color>
+
+    <!-- 详情面板标记徽章：军绿实底 -->
+    <color name="tag_above_bg">#FF556B2F</color>
+    <color name="tag_above_text">#FFFFFFFF</color>
+
+    <!-- ==================================================================
+         企业点位分类色（v0.4 建立，v0.5 统一透明度）。
+         全部半透明，让卫星影像透出来，描边负责把点从影像里剥出来。
+         层级：行政/事业单位 > 协作区 > 重点 > 规上 > 普通
+         v0.5：四级圆点填充 alpha 统一到 #B3（70%），此前 80%/80%/80%/70% 不齐，
+               视觉上浅色两点（卡其白、亮橄榄）几乎不透明，压影像。
+         ================================================================== -->
+    <color name="dot_coop">#B3D9B95C</color>       <!-- 协作区项目：沙金 -->
+    <color name="dot_key">#B39DB06A</color>        <!-- 重点企业：亮橄榄 -->
+    <color name="dot_above">#B3F2F0E6</color>      <!-- 规上企业：卡其白 -->
+    <color name="dot_normal">#B3556B2F</color>     <!-- 普通企业：军绿（最暗一档） -->
+
+    <!-- 行政/公共事业单位：黄色五角星。八五成透明度——星形体量小，
+         再透就丢"黄色"这个身份特征，与圆点的处理刻意不同 -->
+    <color name="dot_gov">#D9FFD400</color>
+
+    <!-- 浅色点配深描边、深色点配浅描边 -->
+    <color name="dot_stroke_dark">#8C2A3320</color>
+    <color name="dot_stroke_light">#B3F2F0E6</color>
+
+    <!-- 标签文字：卡其白主体 + 沙金协作区 + 亮橄榄园区项目 + 湖蓝规上 + 明黄行政单位，灰色描边 -->
+    <color name="label_text_key">#FFF2F0E6</color>
+    <color name="label_text_normal">#FFF2F0E6</color>
+    <color name="label_text_coop">#FFD9B95C</color>
+    <color name="label_text_gov">#FFFFD400</color>
+    <!-- 园区项目（v0.7.13）：亮橄榄。#9DB06A 在深色影像与浅色瓦片上都能立住，
+         且不与协作区的沙金混淆 —— 两类项目一眼可分 -->
+    <color name="label_text_park">#FF9DB06A</color>
+    <!-- 规上企业全称模式（v0.7.14）：湖蓝。
+         既有四色里 沙金/亮橄榄/明黄/卡其白 全是暖色系，第五类再取暖色必然撞色；
+         取冷色是唯一能"五色共存仍一眼分出第五类"的解。
+         明度与亮橄榄、沙金同档（中偏亮），保证在深色影像与浅色瓦片上都立得住。 -->
+    <color name="label_text_above">#FF5FD0E8</color>
+    <color name="label_outline">#FF6E6E6E</color>
+
+    <!-- ==================================================================
+         闲置地块图层（v0.7.27）
+         色相选型：已有五色里 沙金/亮橄榄/明黄/卡其白 集中在 45°~80°（暖黄绿一脉），
+         湖蓝在 189°。色相空间最空的一段是 280°~320°（紫），第六色取紫 ——
+         是"离已有五色都最远"的解，不是审美偏好。详见 map/ParcelOverlay.kt 类注释。
+         ================================================================== -->
+    <color name="parcel_line">#FFB388FF</color>      <!-- 框体轮廓：紫罗兰实线 2.0dp -->
+    <color name="parcel_fill">#24B388FF</color>      <!-- 框体填充：同一支紫压到 14%，让卫星影像透出来 -->
+    <color name="parcel_text">#FFC9A8FF</color>      <!-- 地块名称：比框体线再亮一档，压在自家 14% 底上仍跳得出来 -->
+
+    <!-- ==================================================================
+         闲置厂房图层（v0.7.28）
+         色相选型：闲置地块取了 262°（紫）之后，"离已有五色 + 紫都最远"的色相段
+         只剩暖橙段 —— 珊瑚橙 #FF8A65 落在 14°，与最近的沙金（45°）差 30°，
+         且一个是灰调橄榄金、一个是高饱和珊瑚橙，图例上并排也不会认错。
+         图层互斥（打开闲置厂房时企业名称全隐）进一步保证：地图上不会出现
+         "珊瑚橙的厂房名"与"沙金的协作区名"同时存在的场面。
+         详见 map/IdleFactoryOverlay.kt 类注释。
+         ================================================================== -->
+    <color name="idle_factory_line">#FFFF8A65</color>       <!-- 标记描边 / 图例色块主色：珊瑚橙 -->
+    <color name="idle_factory_fill">#B3FF8A65</color>       <!-- 标记填充：同一支压到 70%，与企业圆点同透明度档 -->
+    <color name="idle_factory_text">#FFFFA98A</color>       <!-- 名称行：比标记再亮一档，压在影像上仍跳得出来 -->
+    <color name="idle_factory_text_sub">#FFFFD2C0</color>   <!-- 面积行：更浅一档，与名称行形成主次 -->
+
+
+    <!-- ==================================================================
+         版权信息页（v0.7.30，版式 B「分段卡片式」）
+         这一页与前面所有面板都不同：它是**居中模态**，不锚定任何按钮、不指向地图上某个东西，
+         屏幕上同时存在的只有"一页纸"。所以底色比浮层更实（92% vs 90%），
+         免得底下地图的亮瓦片把 10.5sp 的说明小字糊掉。
+         文字仍用同一套五档灰阶（100 / 70 / 55 / 40 / 28），与浮层、详情面板一脉相承。
+         ================================================================== -->
+    <color name="about_panel_bg">#F2141608</color>      <!-- 页底：#141608 压到 92%，与浮层同源但更实 -->
+    <color name="about_panel_line">#26FFFFFF</color>    <!-- 页描边 1dp 15% 白，与浮层同值 -->
+    <color name="about_card_bg">#05FFFFFF</color>       <!-- 卡片底：2% 白，只求"比页底亮一丝"，不求看出边界 -->
+    <color name="about_card_line">#13FFFFFF</color>     <!-- 卡片描边 / 卡内行分隔：7.5% 白 -->
+    <color name="about_text_title">#FFF2F0E6</color>   <!-- 应用名：卡其白 100% -->
+    <color name="about_text_value">#FFF2F0E6</color>    <!-- 三行的"值"：100%，是这页真正要人看清的字 -->
+    <color name="about_text_body">#B3F2F0E6</color>    <!-- 版权声明正文：70%，长段落不用纯白，读久了刺眼 -->
+    <color name="about_text_label">#8CF2F0E6</color>   <!-- 三行的"标签"：55%，与"值"拉开主次 -->
+    <color name="about_text_key">#66F2F0E6</color>     <!-- 版本号 / 底图来源 / 数据说明：40% -->
+    <color name="about_text_faint">#47F2F0E6</color>    <!-- 页脚 ©：28%，最轻的一档 -->
+    <color name="about_section">#FFD9B95C</color>      <!-- 卡片小标题：沙金 —— 与浮层标题、协作区标签同色同源 -->
+    <color name="about_btn_line">#47F2F0E6</color>     <!-- 关闭按钮描边：28% 卡其白（不是白 —— 与全页暖调一致） -->
+
+    <!-- 比例尺 / 指北针：与按钮系统同一块玻璃底 -->
+    <color name="scalebar_bg">#99141608</color>
+    <color name="scalebar_fg">#FFF2F0E6</color>
+
+    <color name="bhq_boundary">#00FFFF</color>
+</resources>

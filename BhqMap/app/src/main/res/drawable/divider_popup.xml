@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 浮层内分隔线：深色底上必须用「白 + 低透明度」，不能用白底时代的 #1F000000（深底上等于隐形） -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#1AFFFFFF" />
+    <size android:height="1dp" />
+</shape>

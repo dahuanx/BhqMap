@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- osmdroid 的 MapView 必须有确定尺寸，layout_width/height 不能是 wrap_content -->
+    <org.osmdroid.views.MapView
+        android:id="@+id/map"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 右上角：指北针（地图不旋转，恒指正北；长按可查看校准读数）。
+         v0.5：40dp → 48dp，与右侧次级按钮同尺寸 -->
+    <ImageView
+        android:id="@+id/ivCompass"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/btn_glass_bg"
+        android:contentDescription="指北针（正北方向）"
+        android:scaleType="center"
+        android:src="@drawable/ic_compass"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 右侧悬浮按钮系统：圆形 + 半透明玻璃底；主按钮 56dp 主色实底，次级 48dp -->
+    <LinearLayout
+        android:id="@+id/btnStack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5">
+
+        <!-- 主按钮：显示控制面板入口（56dp，激活态主色实底）。
+             v0.7.15：面板内三个开关语义统一 —— 协作区项目 / 园区项目 / 规上企业，
+             关=简称、开=全称+专属色，都只控标签样式、不控显隐 -->
+        <ImageButton
+            android:id="@+id/btnCoop"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/btn_coop_bg"
+            android:contentDescription="显示控制（协作区项目 / 园区项目 / 规上企业）"
+            android:scaleType="center"
+            android:src="@drawable/ic_coop" />
+
+        <ImageButton
+            android:id="@+id/btnOverview"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_glass_bg"
+            android:contentDescription="回到边合区全貌"
+            android:scaleType="center"
+            android:src="@drawable/ic_overview" />
+
+        <ImageButton
+            android:id="@+id/btnZoomIn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_glass_bg"
+            android:contentDescription="放大"
+            android:scaleType="center"
+            android:src="@drawable/ic_zoom_in" />
+
+        <ImageButton
+            android:id="@+id/btnZoomOut"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_glass_bg"
+            android:contentDescription="缩小"
+            android:scaleType="center"
+            android:src="@drawable/ic_zoom_out" />
+
+        <ImageButton
+            android:id="@+id/btnLocate"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_glass_bg"
+            android:contentDescription="定位"
+            android:scaleType="center"
+            android:src="@drawable/ic_locate" />
+
+        <ImageButton
+            android:id="@+id/btnSearch"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_glass_bg"
+            android:contentDescription="搜索企业"
+            android:scaleType="center"
+            android:src="@drawable/ic_search" />
+    </LinearLayout>
+
+    <!-- 右下角版本号（v0.7.8）：白字、无背景、无描边、带阴影。
+         v0.7.21 起显示「版本名 + 构建号」如 v0.7.21 (29)，
+         运行时按 BuildConfig 填充，无需手工维护 —— 构建号可用来确认手机上装的是哪一版。
+         v0.7.30 起它同时是**版权信息页的入口**（点击弹出，见 MainActivity.showAboutDialog）——
+         所以加了内边距把热区从「11sp 文字那么大」扩到约 84×36dp：
+         原 marginEnd=14dp / marginBottom=10dp 拆成「2dp 外边距 + 12dp / 11dp 内边距」，
+         文字的屏上位置几乎不动（右 14dp 不变、下 10→11dp），但手指够得着了。
+         不加可见的"可点击"提示：右下角一行小字本来就是给"想看版本的人"看的，
+         知道要点的人自然会点，不知道的人也不需要被这行字吸引注意力。 -->
+    <TextView
+        android:id="@+id/tvVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="2dp"
+        android:layout_marginBottom="0dp"
+        android:paddingStart="12dp"
+        android:paddingTop="11dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="11dp"
+        android:shadowColor="#99000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2.5"
+        android:textColor="#FFFFFFFF"
+        android:textSize="11sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="v0.7.8" />
+
+    <!-- 底部：企业详情面板（v0.7.20）。
+
+         v0.7.20 起布局结构改为「固定头 + 独立滚动的简介 + 固定尾」：
+           · 固定头 —— 企业名 / 类型徽章 / 主营业务；
+           · 滚动区 —— 只有简介（scrollIntro），长简介向下滑时头部始终可见；
+           · 固定尾 —— 坐标行。
+         面板总高上限仍是 360dp；简介区的可用高度由代码按头部实测高度动态收紧
+         （MainActivity.fitPanelHeight），短简介时面板贴着内容、不滚动。
+
+         视图是自上而下的单向约束链，末项收在 parent 底部 —— 不写成双向链，
+         是为了让"GONE 掉的徽章/主营业务"仍能正常塌陷（GONE 的锚点在
+         ConstraintLayout 里会收缩成点，链不会断）。 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/panelEnt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_panel_bottom"
+        android:visibility="gone"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="360dp"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/tvEntName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="14dp"
+            android:layout_marginEnd="44dp"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="绥芬河市宏泰木业有限公司" />
+
+        <!-- 标记徽章：协作区项目 / 重点企业 / 规模以上，运行时按数据拼装 -->
+        <TextView
+            android:id="@+id/tvEntScale"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_tag_above"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:textColor="@color/tag_above_text"
+            android:textSize="11sp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvEntName"
+            tools:text="协作区项目 · 重点企业 · 规模以上"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/tvEntBusiness"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="16dp"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvEntScale"
+            tools:text="木材加工、板材生产、家具部件制造" />
+
+        <!-- 简介：唯一可滚动区。高度 wrap 内容，上限由代码动态收紧到面板剩余空间；
+             fadeScrollbars=false 让滚动条常显，有下文时用户一眼看得出来 -->
+        <ScrollView
+            android:id="@+id/scrollIntro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:fadeScrollbars="false"
+            android:scrollbars="vertical"
+            app:layout_constrainedHeight="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="240dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvEntBusiness">
+
+            <TextView
+                android:id="@+id/tvEntIntro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="4dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                tools:text="占地约 26 亩，建有 4 条板材生产线，年加工原木 12 万立方米，产品销往国内及俄远东地区。" />
+        </ScrollView>
+
+        <TextView
+            android:id="@+id/tvEntCoord"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="18dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scrollIntro"
+            app:layout_constraintVertical_bias="1"
+            tools:text="WGS-84   44.370200, 131.032100" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 详情面板右上角关闭小圆钮（浮在面板上，滚动时不随内容移动） -->
+    <ImageButton
+        android:id="@+id/btnPanelClose"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/btn_glass_bg"
+        android:contentDescription="关闭"
+        android:elevation="6dp"
+        android:scaleType="center"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@id/panelEnt"
+        app:layout_constraintTop_toTopOf="@id/panelEnt"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
