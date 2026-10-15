@@ -23,11 +23,26 @@ android {
         applicationId = "com.bianhequ.bhqmap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 40
-        versionName = "0.8.1"
+        versionCode = 41
+        versionName = "0.9.0"
 
         // 注入到 BuildConfig.TIANDITU_TK
         buildConfigField("String", "TIANDITU_TK", "\"$tiandituTk\"")
+
+        // 更新清单地址（v0.9.0）。两条通道都指向同一个 Gitee 仓库：
+        //   主：仓库 raw 静态文件，不消耗 API 配额（实测连打 30 次无限流）
+        //   备：Gitee contents API，正文 base64，匿名可读
+        // 刻意不用 GitHub 做备用通道 —— raw.githubusercontent.com 在国内直连 DNS 解析失败，
+        // 一个在目标网络里连不上的备用通道等于没有备用通道。
+        // 将来若迁到对象存储/CDN，只改这两行，App 其余代码不动。
+        buildConfigField(
+            "String", "UPDATE_MANIFEST_URL",
+            "\"https://gitee.com/dahuanxx/BhqMap/raw/master/update.json\""
+        )
+        buildConfigField(
+            "String", "UPDATE_MANIFEST_API_URL",
+            "\"https://gitee.com/api/v5/repos/dahuanxx/BhqMap/contents/update.json\""
+        )
     }
 
     signingConfigs {

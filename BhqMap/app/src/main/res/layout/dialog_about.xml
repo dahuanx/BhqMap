@@ -257,6 +257,24 @@
         android:textColor="@color/about_text_faint"
         android:textSize="11sp" />
 
+    <!-- 检查更新（v0.9.0）：**轻量文字按钮** —— 沙金文字、无底色。
+         刻意不与「关闭」用同一种描边式样：这一页的主角仍是署名与版权声明，
+         检查更新只是个附加动作，两个同规格按钮会把版面重心拽到按钮上。
+         点它绕过「每日一次」的静默检查限制，不论有没有新版都会给一句明话。 -->
+    <TextView
+        android:id="@+id/btnAboutCheckUpdate"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:letterSpacing="0.1"
+        android:text="检 查 更 新"
+        android:textColor="@color/about_section"
+        android:textSize="12.5sp" />
+
     <!-- 关闭按钮：描边式次级按钮。三条关闭路径（按钮 / 点面板外 / 返回键）见 showAboutDialog -->
     <TextView
         android:id="@+id/btnAboutClose"

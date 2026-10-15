@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider 可授权路径（v0.9.0）。
+
+     为什么需要这个文件：安装 APK 时要把安装包的 URI 交给系统安装器，
+     而 Android 7.0 起禁止跨应用传递 file:// URI（FileUriExposedException），
+     必须换成 FileProvider 生成的 content:// URI。FileProvider 只肯暴露这里登记过的目录，
+     漏登记会在 getUriForFile 时抛 IllegalArgumentException。
+
+     两条路径对应 ApkInstaller.apkFile 的两种落地位置：
+       · ext_downloads —— getExternalFilesDir(DIRECTORY_DOWNLOADS)
+                          实际路径 /storage/emulated/0/Android/data/<包名>/files/Download/
+                          （name 与实际目录名无关，path 才要严格对应，注意大小写）
+       · int_downloads —— filesDir/downloads 兜底：外部存储不可用时（少数机型、
+                          存储挂载异常）才走这条，两条都登记才不会在这种机器上安装失败。 -->
+<paths>
+    <external-files-path
+        name="ext_downloads"
+        path="Download/" />
+    <files-path
+        name="int_downloads"
+        path="downloads/" />
+</paths>

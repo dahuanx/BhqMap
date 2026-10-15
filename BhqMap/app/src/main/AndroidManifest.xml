@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!-- 应用内更新（v0.9.0）：下载安装包后拉起系统安装器。
+         Android 8.0 起这是**必须声明**的权限，且用户还要为"本应用"单独打开
+         「安装未知应用」开关 —— 代码只能引导到设置页（见 update/ApkInstaller.kt）。 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -28,6 +33,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- FileProvider（v0.9.0）：把下载好的安装包以 content:// URI 交给系统安装器。
+             exported=false + grantUriPermissions=true 是标准安全配置：
+             不对外暴露目录，只在每次安装时临时授予读权限。
+             可暴露的路径白名单在 res/xml/file_paths.xml。 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

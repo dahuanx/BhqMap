@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 更新对话框（v0.9.0）：安装包更新与台账数据更新共用一套版式。
+
+     为什么复用版权页的视觉语言（bg_dialog_about + bg_about_card）：
+     两个弹窗会出现在同一屏、同一个手势路径上（都从右下角版本号附近发起），
+     换一套配色只会让人觉得这是两个软件。全页因此沿用卡其白系文字与沙金小标题。
+
+     三个可变区块，由 MainActivity.showUpdateDialog / showDataUpdateDialog 控制显隐：
+       · 版本对比行 tvUpdateVer    —— 数据更新时改为显示数据版本
+       · 更新内容卡（svUpdateNotes）—— 两处都用，装的是各自的说明文本
+       · 进度区 llUpdateProgress   —— 只有安装包下载才出现（数据包很小，不显示进度）
+
+     宽度由代码锁死（同版权页的 300dp 口径），所以这里**不写任何 0dp+weight 撑宽**，
+     只有按钮行内部按 weight 均分 —— 那是在已定宽的容器内分配，不参与面板测量。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_about"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="14dp"
+    android:paddingBottom="14dp">
+
+    <!-- ① 标题行：图标 + 标题 + 版本对比 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="14dp">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_about_icon"
+            android:clipToOutline="true"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@mipmap/ic_launcher" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvUpdateTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.03"
+                android:text="发现新版本"
+                android:textColor="@color/about_text_title"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- 运行时填充，如 "v0.8.1 (40) → v0.9.0 (41)" -->
+            <TextView
+                android:id="@+id/tvUpdateVer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:letterSpacing="0.03"
+                android:textColor="@color/about_text_key"
+                android:textSize="11sp"
+                tools:text="v0.8.1 (40) → v0.9.0 (41)" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ② 通栏线（负 margin 抵消根布局内边距） -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="-14dp"
+        android:layout_marginEnd="-14dp"
+        android:background="@color/about_card_line" />
+
+    <!-- ③ 更新内容卡 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_about_card"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="9dp"
+            android:letterSpacing="0.16"
+            android:text="更 新 内 容"
+            android:textColor="@color/about_section"
+            android:textSize="11sp" />
+
+        <!-- 固定 132dp（约 7 行）：说明长度逐版不同，固定高度让对话框总高稳定，
+             不会因为某版说明长两行就顶到屏幕边缘。超出部分滚动。 -->
+        <ScrollView
+            android:id="@+id/svUpdateNotes"
+            android:layout_width="match_parent"
+            android:layout_height="132dp"
+            android:scrollbarStyle="outsideOverlay">
+
+            <TextView
+                android:id="@+id/tvUpdateNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:textColor="@color/about_text_body"
+                android:textSize="12.5sp"
+                tools:text="· 新增软件内自动检查更新&#10;· 台账数据支持后台同步" />
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- ④ 包体信息行（安装包更新时有值；数据更新时显示数据来源） -->
+    <TextView
+        android:id="@+id/tvUpdateMeta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:lineSpacingExtra="1dp"
+        android:textColor="@color/about_text_key"
+        android:textSize="11sp"
+        tools:text="安装包 3.4 MB · 下载后自动校验完整性" />
+
+    <!-- ⑤ 进度区（默认隐藏，只有安装包下载才亮） -->
+    <LinearLayout
+        android:id="@+id/llUpdateProgress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/pbUpdate"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:max="100"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/tvUpdateProgress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:letterSpacing="0.02"
+            android:textColor="@color/about_text_key"
+            android:textSize="11sp"
+            tools:text="正在下载… 42%" />
+    </LinearLayout>
+
+    <!-- ⑥ 按钮行：「稍后提醒」描边、「立即更新」沙金实底 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnUpdateLater"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_about_btn"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:letterSpacing="0.06"
+            android:text="稍后提醒"
+            android:textColor="@color/about_text_title"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnUpdateNow"
+            android:layout_width="0dp"
+            android:layout_height="42dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_update_btn_primary"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:letterSpacing="0.06"
+            android:text="立即更新"
+            android:textColor="#FF1B1B1B"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</LinearLayout>

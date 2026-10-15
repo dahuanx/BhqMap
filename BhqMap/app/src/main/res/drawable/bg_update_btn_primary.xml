@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 更新对话框·主按钮底（v0.9.0）：沙金实底 + 深色字。
+
+     与版权页的「关闭」按钮刻意不同：那里去掉实底是为了让按钮退到后面，
+     而这里的「立即更新」是这一页唯一想让用户点的东西 —— 主色实底把分量压上去。
+     沙金 #D9B95C 与浮层标题、协作区标签、版权页小标题同色同源，不引入新颜色。
+     按压态只压暗填充，不换描边（实底按钮没有描边可换）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#B8D9B95C" />
+            <corners android:radius="9dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFD9B95C" />
+            <corners android:radius="9dp" />
+        </shape>
+    </item>
+</selector>

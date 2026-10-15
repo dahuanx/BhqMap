@@ -1,0 +1,18 @@
+{
+  "versionCode": 41,
+  "versionName": "0.9.0",
+  "minSupportedCode": 0,
+  "apkUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/v0.9.0/BhqMap-v0.9.0.apk",
+  "apkSizeBytes": 3473365,
+  "apkSha256": "f9e4cdcf720f19e2af91f7358f89c4cdde99ed34642e136c31eed83a446171f4",
+  "notes": "构建日期：2026-10-15　|　versionCode 41\n\n· 启动自动检查新版本：打开软件约 2 秒后后台检查，有新版本才提示，没有就完全无感。\n· 一键下载安装：点「立即更新」后自动下载、校验完整性、拉起系统安装器。首次需要允许「安装未知来源应用」，软件会直接跳转到那个设置页。\n· 稍后提醒：暂时不想更新可选「稍后提醒」，7 天后再提；也可以随时在右下角版本号 → 版权页里手动检查。\n· 每天最多自动检查一次，不额外耗流量；下载失败可重试，不会留下半个文件。\n\n· 以后只改企业台账不必再发新版软件：启动时比对数据版本，发现新版内置台账就自动同步，全程静默。\n· 你在手机上手动导入过的台账不会被覆盖：数据来源分三类区别对待，机内导入的数据优先保留、自动让路。\n· 数据来源无法确认时（由早期版本写入的文件），会先问一句再替换，绝不静默覆盖。",
+  "data": {
+    "version": 8,
+    "source": "边合区企业台账+1.xlsx",
+    "enterprisesUrl": "https://gitee.com/dahuanxx/BhqMap/raw/master/data/enterprises-v8.json",
+    "enterprisesSha256": "bf111f085f9797adaf1757db47ae1f30eb205745f9e625f5451d08eca3936c6e",
+    "factoriesUrl": "https://gitee.com/dahuanxx/BhqMap/raw/master/data/idle_factories-v8.json",
+    "factoriesSha256": "79da6cefa316832fb2ecd983a42142e1b4795b26ce461f74feee4f85e1afd520"
+  },
+  "releasedAt": "2026-10-15"
+}

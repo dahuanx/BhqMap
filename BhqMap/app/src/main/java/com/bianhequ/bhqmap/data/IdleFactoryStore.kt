@@ -116,6 +116,15 @@ class IdleFactoryStore(private val context: Context) {
         return out
     }
 
+    /**
+     * 从 JSON 文本解析（v0.9.0 数据热更新用）。
+     *
+     * 闲置厂房的热更新**不做来源判断**：它没有"用户逐条录入"的入口，
+     * 机内导入也是整表替换，语义上不存在"用户自己维护的数据被覆盖"的风险 ——
+     * 与企业数据分属两套规则，别把两者的处理方式混起来。
+     */
+    fun parseText(text: String): List<IdleFactory> = parse(text)
+
     companion object {
         /** filesDir 下的导入文件名（v0.8.0 起）；assets 内的种子同名 */
         const val FILE_NAME = "idle_factories.json"

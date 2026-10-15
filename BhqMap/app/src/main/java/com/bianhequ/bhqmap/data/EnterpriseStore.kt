@@ -26,14 +26,22 @@ class EnterpriseStore(private val context: Context) {
     var isSampleData: Boolean = false
         private set
 
-    /** 读取全部企业。本地数据缺文件或种子版本旧时，用 assets 里的数据重新播种。 */
+    /**
+     * 读取全部企业。
+     *
+     * **播种只在首次安装（本地没有任何文件）时发生** —— 这是 v0.9.0 的关键改动。
+     *
+     * 旧逻辑是「本地种子版本低于包内版本就用 assets 覆盖」，而机内导入台账写出的文件
+     * 带的正是**写入当时的包内版本号**，于是每次发版提升 SEED_VERSION，
+     * 用户导入的数据就会被静默整表覆盖一次，全程没有提示。
+     * 手动分发时代这还只是"一次、有人知道"；接上应用内自动更新后，
+     * 它会变成"全单位手机同一天批量静默覆盖"，风险被放大到不可接受。
+     *
+     * 内置数据的更新改由「数据热更新」负责（见 update/DataSync.kt）：
+     * 它比对版本、校验哈希，并且对用户导入的数据主动让路。
+     */
     fun load(): List<Enterprise> {
-        val localSeedVersion = if (file.exists()) {
-            runCatching {
-                JSONObject(file.readText(Charsets.UTF_8)).optInt("seedVersion", 1)
-            }.getOrDefault(1)
-        } else 0
-        if (localSeedVersion < SEED_VERSION) seedFromAssets()
+        if (!file.exists()) seedFromAssets()
 
         val text = runCatching { file.readText(Charsets.UTF_8) }.getOrNull()
             ?: return emptyList()
@@ -43,12 +51,47 @@ class EnterpriseStore(private val context: Context) {
         return list
     }
 
-    /** 整表替换（v0.3 的 Excel 导入会走这里）。写前先备份，失败可回滚。 */
-    fun replaceAll(list: List<Enterprise>): Boolean {
+    /** 本地数据版本（文件头 `seedVersion`）。无文件返回 0 */
+    fun localDataVersion(): Int = readHeader().first
+
+    /**
+     * 本地数据来源。v0.8.1 及更早写出的文件没有这个字段，返回 [SOURCE_UNKNOWN] ——
+     * 数据热更新会因此保守处理：不自动覆盖，改为询问一次。
+     */
+    fun localSource(): String = readHeader().second
+
+    /**
+     * 只读文件头，不解析 164 条正文。
+     * 更新检查每次启动都要问一次，这条路要足够轻。
+     */
+    private fun readHeader(): Pair<Int, String> {
+        if (!file.exists()) return 0 to SOURCE_UNKNOWN
+        val root = runCatching { JSONObject(file.readText(Charsets.UTF_8)) }.getOrNull()
+            ?: return 0 to SOURCE_UNKNOWN
+        return root.optInt("seedVersion", 0) to
+            root.optString("source").ifBlank { SOURCE_UNKNOWN }
+    }
+
+    /**
+     * 整表替换。默认按"用户机内导入"记账（[SOURCE_IMPORT]）——
+     * 这条来源标记决定它**不会被数据热更新自动覆盖**：用户自己录的数据，用户说了算。
+     */
+    fun replaceAll(list: List<Enterprise>, source: String = SOURCE_IMPORT): Boolean =
+        writeAtomic(EnterpriseJson.serialize(list, source, SEED_VERSION))
+
+    /**
+     * 数据热更新写入（v0.9.0）：来源记 [SOURCE_REMOTE]，数据版本记清单下发的版本 ——
+     * 这样下次检查时"版本没变"，就不会重复下载。
+     */
+    fun replaceFromRemote(list: List<Enterprise>, dataVersion: Int): Boolean =
+        writeAtomic(EnterpriseJson.serialize(list, SOURCE_REMOTE, dataVersion))
+
+    /** 原子写：先写 tmp → 备份旧的 → 删旧 → rename。中途被杀不会留下半截 JSON */
+    private fun writeAtomic(text: String): Boolean {
         val tmp = File(context.filesDir, "$FILE_NAME.tmp")
         return runCatching {
             if (file.exists()) file.copyTo(File(context.filesDir, "$FILE_NAME.bak"), overwrite = true)
-            tmp.writeText(EnterpriseJson.serialize(list), Charsets.UTF_8)
+            tmp.writeText(text, Charsets.UTF_8)
             if (file.exists()) file.delete()
             tmp.renameTo(file)
         }.isSuccess
@@ -59,7 +102,19 @@ class EnterpriseStore(private val context: Context) {
             context.assets.open(SAMPLE_ASSET).use { input ->
                 file.outputStream().use { output -> input.copyTo(output) }
             }
+            // 播种后补上来源标记，否则会被当成"来源不明"保护起来，
+            // 第一次热更新时反而要多问用户一次 —— 明明就是内置数据。
+            // assets 里的种子不带这个字段（它由脚本生成，不掺运行时状态），所以在这里补。
+            markSeedSource()
         }
+    }
+
+    /** 给刚播种的文件补写 `source: seed`，正文原样保留 */
+    private fun markSeedSource() {
+        val root = runCatching { JSONObject(file.readText(Charsets.UTF_8)) }.getOrNull() ?: return
+        if (root.optString("source").isNotBlank()) return
+        root.put("source", SOURCE_SEED)
+        runCatching { file.writeText(root.toString(2), Charsets.UTF_8) }
     }
 
     companion object {
@@ -95,8 +150,33 @@ class EnterpriseStore(private val context: Context) {
          *    订正后「永财经贸」变为「永材经贸」，与行 118 同名 ⇒ 重名 3 组改为
          *    木加木业 / 永材经贸 / 美博木业，仍各自保留独立条目（待洲哥确认是否录重）。
          * 升级安装后首次启动生效。Excel 导入写入的数据也带当前版本号，不会被误重置。
+         *
+         * **v0.9.0 语义修正**：最后那句是 v0.8.1 时的判断，**实际是错的** ——
+         * 导入写出的版本号等于写入当时的包内版本，于是之后每次发版提升 SEED_VERSION，
+         * 用户导入的数据都会被静默整表覆盖。v0.9.0 已把播种改为「只在首次安装发生」，
+         * 本常量随之变成纯粹的**数据版本号**（与发布清单 `update.json` 的 `data.version`
+         * 同口径）。不要再靠提升它来让存量设备换数据 —— 那条路已经堵死，改用数据热更新。
          */
         const val SEED_VERSION = 8
+
+        /**
+         * 数据来源标记（v0.9.0）。
+         *
+         * 决定数据热更新能不能覆盖本地文件 —— 规则与理由见 `update/DataSync.kt` 的类注释。
+         * 一句话：**分不清来源时，一律当作"用户的数据"保护起来。**
+         */
+
+        /** 首次安装时从 assets 播种出来的 */
+        const val SOURCE_SEED = "seed"
+
+        /** 用户在机内导入 Excel 得到的 —— **永不**被热更新自动覆盖 */
+        const val SOURCE_IMPORT = "import"
+
+        /** 上一次数据热更新写入的 */
+        const val SOURCE_REMOTE = "remote"
+
+        /** v0.8.1 及更早写出的文件没有来源标记 —— 保守当作"用户的数据"处理，只询问不覆盖 */
+        const val SOURCE_UNKNOWN = "unknown"
     }
 }
 
@@ -140,7 +220,16 @@ object EnterpriseJson {
         return out
     }
 
-    fun serialize(list: List<Enterprise>): String {
+    /**
+     * [source] 记数据来源（seed / import / remote），[dataVersion] 记数据版本 ——
+     * 两者都是 v0.9.0 为「数据热更新与用户导入共存」加的记账字段，
+     * 读方见 [EnterpriseStore.localSource] / [EnterpriseStore.localDataVersion]。
+     */
+    fun serialize(
+        list: List<Enterprise>,
+        source: String = EnterpriseStore.SOURCE_SEED,
+        dataVersion: Int = EnterpriseStore.SEED_VERSION
+    ): String {
         val arr = org.json.JSONArray()
         for (e in list) {
             arr.put(JSONObject().apply {
@@ -166,7 +255,8 @@ object EnterpriseJson {
         }
         return JSONObject().apply {
             put("version", 2)
-            put("seedVersion", EnterpriseStore.SEED_VERSION)
+            put("seedVersion", dataVersion)
+            put("source", source)
             put("count", list.size)
             put("enterprises", arr)
         }.toString(2)

@@ -2,11 +2,14 @@ package com.bianhequ.bhqmap
 
 import android.Manifest
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
@@ -21,6 +24,8 @@ import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.PopupWindow
+import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -50,6 +55,11 @@ import com.bianhequ.bhqmap.map.MapScaleOverlay
 import com.bianhequ.bhqmap.map.ParcelOverlay
 import com.bianhequ.bhqmap.map.RoadOverlay
 import com.bianhequ.bhqmap.map.TiandituTileSource
+import com.bianhequ.bhqmap.update.ApkDownloader
+import com.bianhequ.bhqmap.update.ApkInstaller
+import com.bianhequ.bhqmap.update.DataSync
+import com.bianhequ.bhqmap.update.UpdateChecker
+import com.bianhequ.bhqmap.update.UpdateManifest
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -393,6 +403,27 @@ class MainActivity : AppCompatActivity() {
         private const val ABOUT_DIALOG_WIDTH_DP = 300
 
         private const val REQ_LOCATION = 1001
+
+        // ---- 应用内更新（v0.9.0）----
+
+        /** 更新检查用的 SharedPreferences 文件名与三个键 */
+        private const val UPDATE_PREFS = "bhqmap_update"
+        private const val KEY_UPDATE_LAST_CHECK = "last_check_at"
+        private const val KEY_UPDATE_SNOOZE = "snooze_until"
+        private const val KEY_DATA_DECLINED = "data_declined_version"
+
+        /** 启动后延迟多久做静默检查：等地图与数据先就位，不抢首屏 */
+        private const val UPDATE_CHECK_DELAY_MS = 1800L
+
+        /**
+         * 静默检查的最短间隔：一天一次。
+         * 频率刻意压得低 —— 管理局出口是同一个公网 IP，
+         * 几十台设备如果每次启动都问一次，对端看到的就是一串密集请求。
+         */
+        private const val UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L
+
+        /** 「稍后提醒」的静默期：7 天 */
+        private const val UPDATE_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -412,7 +443,9 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
 
-        // 企业数据：种子版本低于内置版本时自动重新播种（升级安装即换新数据）
+        // 企业数据：**只在首次安装时**从 assets 播种；已有文件一律不覆盖（v0.9.0 改）。
+        // 旧行为是"本地种子版本低于包内版本就整表覆盖"，那会把用户机内导入的台账
+        // 一起盖掉（导入写出的版本号正是当时的包内版本）。理由详见 EnterpriseStore.load。
         store = EnterpriseStore(this)
         enterprises = store.load()
 
@@ -433,6 +466,9 @@ class MainActivity : AppCompatActivity() {
         addIdleFactoryOverlay()
         setupUi()
         logTelemetry()
+
+        // 应用内更新 + 台账数据热更新（v0.9.0）：延后发起，不与首屏抢资源
+        scheduleSilentUpdateCheck()
     }
 
     // ------------------------------------------------------------------
@@ -1177,6 +1213,289 @@ class MainActivity : AppCompatActivity() {
         dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
 
         view.findViewById<View>(R.id.btnAboutClose).setOnClickListener { dialog.dismiss() }
+
+        // 检查更新（v0.9.0）：手动路径，绕过「每日一次」与「稍后提醒」的限制
+        view.findViewById<View>(R.id.btnAboutCheckUpdate).setOnClickListener {
+            dialog.dismiss()
+            checkUpdate(manual = true)
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // 应用内更新与台账数据热更新（v0.9.0）
+    //
+    // 两条链路共用仓库根目录的一份 update.json（见 update/UpdateChecker.kt）：
+    //   安装包更新 —— 有新版弹框，用户点头后下载、校验、拉起系统安装器
+    //   数据热更新 —— 台账改了不必发版，静默替换（对用户导入的数据让路）
+    // 检查一律放在后台线程（本工程没有协程依赖，用 Thread + runOnUiThread，
+    // 与台账导入同一套写法）；任何失败都静默，绝不影响看图。
+    // ------------------------------------------------------------------
+
+    /**
+     * 启动后的静默检查：延后 [UPDATE_CHECK_DELAY_MS] 再发起。
+     *
+     * 为什么延后：冷启动头一两秒在解析 164 条企业数据、读三份 KML、装瓦片，
+     * 这会儿抢网络只会让首屏更慢。等地图画出来再问版本，用户完全无感。
+     */
+    private fun scheduleSilentUpdateCheck() {
+        binding.map.postDelayed({ checkUpdate(manual = false) }, UPDATE_CHECK_DELAY_MS)
+    }
+
+    /**
+     * 检查更新。
+     *
+     * [manual] = true 表示用户点了版权页的「检查更新」—— 绕过「每日一次」与
+     * 「稍后提醒」两道限制，并且不论有没有新版都回一句明话；
+     * 静默检查则相反：**任何失败都不出声**，不因为一次网络抖动打扰看图的人。
+     */
+    private fun checkUpdate(manual: Boolean) {
+        val prefs = getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        if (!manual) {
+            if (now < prefs.getLong(KEY_UPDATE_SNOOZE, 0L)) return
+            if (now - prefs.getLong(KEY_UPDATE_LAST_CHECK, 0L) < UPDATE_CHECK_INTERVAL_MS) return
+            if (!hasNetwork()) return
+        }
+        prefs.edit().putLong(KEY_UPDATE_LAST_CHECK, now).apply()
+
+        Thread {
+            val manifest = UpdateChecker.fetch()
+            runOnUiThread {
+                if (manifest == null) {
+                    // 网络不通、清单还没建、JSON 损坏都走这里。只有用户主动问才告诉他
+                    if (manual) {
+                        Toast.makeText(this, "检查更新失败，请确认网络后重试", Toast.LENGTH_SHORT).show()
+                    }
+                    return@runOnUiThread
+                }
+                handleDataUpdate(manifest, prefs)
+                if (manifest.hasApk && manifest.isNewerThan(BuildConfig.VERSION_CODE)) {
+                    showUpdateDialog(manifest)
+                } else if (manual) {
+                    Toast.makeText(
+                        this,
+                        "当前已是最新版本 v${BuildConfig.VERSION_NAME}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }.start()
+    }
+
+    /**
+     * 台账数据热更新：能静默就静默，需要用户点头才弹框。
+     *
+     * 三种处置对应数据来源三态（判据与理由见 update/DataSync.kt 的类注释）：
+     *   内置 / 上次同步来的        → 直接换，用户无感
+     *   来源不明（v0.8.1 及更早）  → 问一次；选了「保持现状」就记下版本，不再重复问
+     *   用户机内导入的             → 一个字都不说，让路
+     */
+    private fun handleDataUpdate(manifest: UpdateManifest, prefs: SharedPreferences) {
+        when (DataSync.evaluate(store, manifest)) {
+            DataSync.Decision.SHOULD_UPDATE -> Thread {
+                val result = DataSync.apply(store, IdleFactoryStore(this), manifest)
+                runOnUiThread {
+                    if (result.ok) {
+                        // 与机内导入后的刷新路径一致：dataProvider 每帧取值，
+                        // 重新赋字段 + invalidate 就能让全部图层换数据，无需重建 overlay
+                        enterprises = store.load()
+                        idleFactories = IdleFactoryStore(this).load()
+                        binding.map.invalidate()
+                        Log.i(TAG, "台账数据已同步至第 ${manifest.dataVersion} 版：${result.detail}")
+                    } else {
+                        Log.w(TAG, "台账数据同步失败：${result.detail}")
+                    }
+                }
+            }.start()
+
+            DataSync.Decision.NEED_CONFIRM ->
+                if (prefs.getInt(KEY_DATA_DECLINED, 0) < manifest.dataVersion) {
+                    showDataUpdateDialog(manifest, prefs)
+                }
+
+            DataSync.Decision.SKIP_USER_DATA ->
+                Log.i(TAG, "本机台账为机内导入，跳过内置数据同步（第 ${manifest.dataVersion} 版）")
+
+            DataSync.Decision.UP_TO_DATE -> Unit
+        }
+    }
+
+    /** 是否真的有网可上（不只是"连上了某个 WiFi"） */
+    private fun hasNetwork(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return true
+        val caps = cm.getNetworkCapabilities(cm.activeNetwork ?: return false) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    /** 安装包更新对话框 */
+    private fun showUpdateDialog(manifest: UpdateManifest) {
+        val view = layoutInflater.inflate(R.layout.dialog_update, null)
+        view.findViewById<TextView>(R.id.tvUpdateTitle).text = "发现新版本"
+        view.findViewById<TextView>(R.id.tvUpdateVer).text =
+            "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) →" +
+                " v${manifest.versionName} (${manifest.versionCode})"
+        view.findViewById<TextView>(R.id.tvUpdateNotes).text =
+            manifest.notes.ifBlank { "本次更新包含若干修复与优化。" }
+        view.findViewById<TextView>(R.id.tvUpdateMeta).text = buildString {
+            append("安装包约 ").append(formatSize(manifest.apkSizeBytes))
+            append(" · 下载后自动校验完整性")
+            if (!ApkInstaller.canInstall(this@MainActivity)) {
+                append("\n首次更新需允许本应用「安装未知应用」，届时会跳转设置页")
+            }
+        }
+
+        val dialog = createUpdateDialog(view)
+        view.findViewById<View>(R.id.btnUpdateLater).setOnClickListener {
+            // 七天后再提。手动检查不受此限制 —— 不是"关掉就再也收不到"
+            getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE).edit()
+                .putLong(KEY_UPDATE_SNOOZE, System.currentTimeMillis() + UPDATE_SNOOZE_MS)
+                .apply()
+            dialog.dismiss()
+            Toast.makeText(this, "已改为 7 天后提醒", Toast.LENGTH_SHORT).show()
+        }
+        view.findViewById<View>(R.id.btnUpdateNow).setOnClickListener {
+            startDownload(view, dialog, manifest)
+        }
+    }
+
+    /**
+     * 台账数据更新确认框（只在"来源不明"时出现）。
+     *
+     * 文案上不美化这件事：同步就是替换，替换就会覆盖本机现有台账 ——
+     * 说清楚，用户才能做出对的选择。
+     */
+    private fun showDataUpdateDialog(manifest: UpdateManifest, prefs: SharedPreferences) {
+        val view = layoutInflater.inflate(R.layout.dialog_update, null)
+        view.findViewById<TextView>(R.id.tvUpdateTitle).text = "内置台账更新"
+        view.findViewById<TextView>(R.id.tvUpdateVer).text =
+            "数据版本 ${store.localDataVersion()} → ${manifest.dataVersion}"
+        view.findViewById<TextView>(R.id.tvUpdateNotes).text = buildString {
+            append("内置台账已更新到第 ").append(manifest.dataVersion).append(" 版")
+            if (manifest.dataSource.isNotBlank()) {
+                append("（来自 ").append(manifest.dataSource).append("）")
+            }
+            append("。\n\n本机现有台账的来源无法确认（由早期版本写入），")
+            append("同步会用新版内置台账替换它。如果你在这台手机上手动导入过自己的台账")
+            append("并且要保留，请选「保持现状」，之后可在显示控制浮层里重新导入。")
+        }
+        view.findViewById<TextView>(R.id.tvUpdateMeta).text = "数据文件很小，通常一两秒即可完成"
+
+        val dialog = createUpdateDialog(view)
+        view.findViewById<TextView>(R.id.btnUpdateLater).text = "保持现状"
+        view.findViewById<TextView>(R.id.btnUpdateNow).text = "同步数据"
+
+        view.findViewById<View>(R.id.btnUpdateLater).setOnClickListener {
+            // 记住"这一版不再问"，避免每次启动都弹同一个框
+            prefs.edit().putInt(KEY_DATA_DECLINED, manifest.dataVersion).apply()
+            dialog.dismiss()
+        }
+        view.findViewById<View>(R.id.btnUpdateNow).setOnClickListener {
+            dialog.dismiss()
+            val waiting = Toast.makeText(this, "正在同步台账数据…", Toast.LENGTH_SHORT)
+            waiting.show()
+            Thread {
+                val result = DataSync.apply(store, IdleFactoryStore(this), manifest)
+                runOnUiThread {
+                    if (result.ok) {
+                        enterprises = store.load()
+                        idleFactories = IdleFactoryStore(this).load()
+                        binding.map.invalidate()
+                        Toast.makeText(this, "台账数据已更新：${result.detail}", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this, "同步失败：${result.detail}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }.start()
+        }
+    }
+
+    /** 两个更新对话框共用的壳（透明 window + 与版权页同口径的宽度钳制） */
+    private fun createUpdateDialog(view: View): AlertDialog {
+        val dialog = AlertDialog.Builder(this).setView(view).create()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.show()
+        val screenWidth = resources.displayMetrics.widthPixels
+        val width = dpToPx(ABOUT_DIALOG_WIDTH_DP).coerceAtMost(screenWidth - dpToPx(32))
+        dialog.window?.setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT)
+        return dialog
+    }
+
+    /**
+     * 下载安装包，在同一个对话框里显示进度，完成后拉起系统安装器。
+     *
+     * 为什么不另开一个进度框：那会盖在自己上面，用户还得管两个框的关闭顺序。
+     * 原地把内容区换成进度区，语义最直接 —— "这个框正在做刚才那件事"。
+     * 中途点框外关闭 = 取消下载（下载线程靠 [cancelled] 布尔量退出）。
+     */
+    private fun startDownload(view: View, dialog: AlertDialog, manifest: UpdateManifest) {
+        val progressBar = view.findViewById<ProgressBar>(R.id.pbUpdate)
+        val progressText = view.findViewById<TextView>(R.id.tvUpdateProgress)
+        val meta = view.findViewById<TextView>(R.id.tvUpdateMeta)
+
+        // 切到进度态：收掉说明与按钮，亮出进度区
+        view.findViewById<View>(R.id.svUpdateNotes).visibility = View.GONE
+        (view.findViewById<View>(R.id.btnUpdateLater).parent as View).visibility = View.GONE
+        view.findViewById<View>(R.id.llUpdateProgress).visibility = View.VISIBLE
+        view.findViewById<TextView>(R.id.tvUpdateVer).text = "v${manifest.versionName}"
+        meta.text = "安装包约 ${formatSize(manifest.apkSizeBytes)}"
+        progressText.text = "正在下载…"
+
+        // 未授权时先把用户送去开「安装未知应用」—— 等 3 MB 下完再被拦，体验差得多
+        if (!ApkInstaller.canInstall(this)) {
+            ApkInstaller.openPermissionSettings(this)
+            progressText.text = "请在弹出的设置页里允许本应用安装应用，然后返回"
+        }
+
+        var cancelled = false
+        dialog.setOnDismissListener { cancelled = true }
+
+        Thread {
+            val apk = ApkDownloader.download(
+                this,
+                manifest,
+                { percent ->
+                    runOnUiThread {
+                        if (percent < 0) {
+                            progressText.text = "正在下载…"
+                        } else {
+                            progressBar.progress = percent
+                            progressText.text = "正在下载… $percent%"
+                        }
+                    }
+                },
+                { cancelled }
+            )
+            runOnUiThread {
+                dialog.setOnDismissListener(null)
+                if (apk == null) {
+                    dialog.dismiss()
+                    // 用户自己关掉的不提示；其余情况要给一句可行动的说明
+                    if (!cancelled) {
+                        Toast.makeText(
+                            this,
+                            "下载失败或校验未通过，请稍后在网络稳定时重试",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                } else {
+                    dialog.dismiss()
+                    if (!ApkInstaller.install(this, apk)) {
+                        Toast.makeText(
+                            this,
+                            "没有找到系统安装器，安装包已存到应用下载目录",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }.start()
+    }
+
+    /** 字节数转人类可读（更新对话框里的包体信息） */
+    private fun formatSize(bytes: Long): String = when {
+        bytes <= 0L -> "未知大小"
+        bytes < 1024L * 1024L -> "%.0f KB".format(bytes / 1024.0)
+        else -> "%.1f MB".format(bytes / 1024.0 / 1024.0)
     }
 
     // ------------------------------------------------------------------
