@@ -8,18 +8,21 @@
 - **企业点位**：164 条台账（可上图 154 家），按身份分级显示（规上企业 / 重点企业 / 协作区项目 / 园区项目 / 行政事业单位），专属颜色与字号，防重叠标签避让引擎
 - **专题图层**：闲置地块（紫框）、闲置厂房（橙块）三态互斥；园区路网道路名按比例尺显隐
 - **台账导入**（v0.8.0）：手机上直接选择 .xlsx 导入企业台账与闲置厂房，导入前统计确认，数据持久保存
-- **详情面板**：企业档案三段式面板，名称/类型/主营业务固定，简介滚动
+- **详情面板**：企业档案三段式面板，名称 / 类型 / 主营业务固定，简介滚动（v0.8.1 起 96 家主营、102 条简介）
 - **版权信息页**：权益方、开发团队、审图号（GS(2025)1508号）
 
 ## 下载安装
 
 无需构建，手机浏览器直接打开（**微信内打不开 APK 下载，请用系统浏览器**）：
 
-**最新正式版（v0.8.0）**
-https://gitee.com/dahuanxx/BhqMap/releases/download/v0.8.0/BhqMap-v0.8.0.apk
+**最新正式版（v0.8.1）**
+
+- Gitee（国内推荐）：https://gitee.com/dahuanxx/BhqMap/releases/download/v0.8.1/BhqMap-v0.8.1-release.apk
+- GitHub：https://github.com/dahuanx/BhqMap/releases/download/v0.8.1/BhqMap-v0.8.1-release.apk
 
 - 适用系统：Android 8.0 及以上；首次安装需允许「安装未知来源应用」
 - 全部版本见 Gitee [发行版](https://gitee.com/dahuanxx/BhqMap/releases) 或 GitHub [Releases](https://github.com/dahuanx/BhqMap/releases)
+- 不想装 App 可下载 `BhqMap-Web-v0.3.2.html`，浏览器双击打开即用（功能与 App 对齐）
 
 ## 仓库结构
 
@@ -27,7 +30,7 @@ https://gitee.com/dahuanxx/BhqMap/releases/download/v0.8.0/BhqMap-v0.8.0.apk
 边合区产业地图/
 ├── BhqMap/                              # Android 工程源码（Kotlin + osmdroid + 天地图 WMTS）
 ├── Web版/                               # 响应式 Web 版（Leaflet 单页，功能与 App 对齐）
-├── 边合区产业地图-Webv0.3.1.html          # Web 版单文件打包版
+├── 边合区产业地图-Webv0.3.2.html          # Web 版单文件打包版
 ├── 边合区企业台账.xlsx                    # 台账数据源模板（B/C/D/E 列为全称/简称/经度/纬度）
 └── 边合区产业地图-Android应用方案-v1.0.md   # 立项方案
 ```
@@ -45,6 +48,7 @@ https://gitee.com/dahuanxx/BhqMap/releases/download/v0.8.0/BhqMap-v0.8.0.apk
 
 | 版本 | 说明 |
 |---|---|
+| v0.8.1 (40) | 按新台账更新数据：主营业务首次入账 96 家、企业简介 5 → 102 条、5 处名称订正；详情面板去掉「（简称）」后缀；机内导入补全主营业务 |
 | v0.8.0 (39) | 台账 Excel 机内导入：浮层新增导入入口，选 .xlsx 即可导入企业与闲置厂房数据，统计确认后生效，持久保存 |
 | v0.7.30 (38) | 版权信息页落地（分段卡片式） |
 | v0.7.27–29 (35–37) | 闲置地块、闲置厂房图层，三态互斥，叠放顺序定稿 |
