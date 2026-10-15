@@ -8,7 +8,7 @@ package com.bianhequ.bhqmap.data
  *
  * 列位（1-based，与 excel.js 代码一致；excel.js 头注释「C2=全称」是笔误）：
  *   企业台账表：B=全称  C=简称  D=经度  E=纬度
- *               F=规上  G=协作  H=园区  I=重点  J=行政  M=简介
+ *               F=规上  G=协作  H=园区  I=重点  J=行政  L=主营业务  M=简介
  *   闲置厂房表：B=名称  C=闲置面积  D=经度  E=纬度
  *
  * 规则（逐条对照 excel.js / .rebuild_seed_v7.py）：
@@ -91,7 +91,9 @@ object LedgerParser {
                 shortName = shortName,
                 lon = lon,
                 lat = lat,
-                mainBusiness = "",
+                // v0.8.1：主营业务（L 列）此前写死空串（生成种子时该列全空），
+                // 现在台账已填 96 条 —— 导入路径必须带上，否则导入后这一栏又没了。
+                mainBusiness = str(cell(row, 12)),
                 intro = str(cell(row, 13)),
                 aboveScale = yes(cell(row, 6)),
                 isCoop = yes(cell(row, 7)),

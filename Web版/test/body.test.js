@@ -237,26 +237,31 @@ all &= run('手机 dpr=3 全貌', 13.6, e => {
   all &= ok;
 }
 
-/* 台账 Excel 解析（.rebuild_seed_v7.py 移植）：对真实台账文件核对四项统计 */
+/* 台账 Excel 解析（.rebuild_seed_v8.py 移植）：对真实台账文件核对四项统计 */
 {
   const XLSX = require('C:/Users/Administrator/.workbuddy/binaries/node/workspace/node_modules/xlsx');
-  const ledgerPath = path.join(__dirname, '..', '..', '边合区企业台账.xlsx');
+  // v0.3.2：数据源切到新台账（边合区企业台账+1.xlsx，2026-10-15）
+  const ledgerPath = path.join(__dirname, '..', '..', '边合区企业台账+1.xlsx');
   const wb = XLSX.read(fs.readFileSync(ledgerPath), { type: 'buffer' });
   const { enterprises, stats } = parseLedgerWorkbook(XLSX, wb);
-  // 基准：种子 v7 = 164 条 / 154 有坐标 / 10 无坐标
+  // 基准：种子 v8 = 164 条 / 154 有坐标 / 10 无坐标 / 主营 96 / 简介 102
+  const nBiz = enterprises.filter(e => e.mainBusiness).length;
+  const nIntro = enterprises.filter(e => (e.intro || '').length > 0).length;
   const ok = stats.total === 164 && stats.withcoord === 154 && stats.nocoord === 10
       && enterprises[0].id.startsWith('td-')
       && enterprises.every(e => e.id.startsWith('td-'))
       && enterprises.filter(e => e.nameIsShort).length === stats.shortonly
+      && nBiz === 96 && nIntro === 102
       && enterprises.every(e => hasCoord(e) ? (e.lon >= 130 && e.lon <= 132.5) : true);
-  console.log(`${ok ? 'PASS' : 'FAIL'}  台账解析: ${stats.total} 条（基准 164）· 可上图 ${stats.withcoord}（基准 154）· 无坐标 ${stats.nocoord}（基准 10）· 仅简称 ${stats.shortonly} · 同点位重复 ${stats.dupGroups} 组`);
+  console.log(`${ok ? 'PASS' : 'FAIL'}  台账解析: ${stats.total} 条（基准 164）· 可上图 ${stats.withcoord}（基准 154）· 无坐标 ${stats.nocoord}（基准 10）· 仅简称 ${stats.shortonly} · 主营 ${nBiz}（基准 96）· 简介 ${nIntro}（基准 102）· 同点位重复 ${stats.dupGroups} 组`);
   all &= ok;
 }
 
 /* 闲置厂房工作表解析（.build_idle_factories.py 移植）：与 App 包内 idle_factories.json 逐条全等 */
 {
   const XLSX = require('C:/Users/Administrator/.workbuddy/binaries/node/workspace/node_modules/xlsx');
-  const ledgerPath = path.join(__dirname, '..', '..', '边合区企业台账.xlsx');
+  // v0.3.2：数据源切到新台账（与 App 包内 idle_factories.json 同源）
+  const ledgerPath = path.join(__dirname, '..', '..', '边合区企业台账+1.xlsx');
   const wb = XLSX.read(fs.readFileSync(ledgerPath), { type: 'buffer' });
   const fac = parseFactorySheet(XLSX, wb);
   const ref = JSON.parse(fs.readFileSync(
@@ -271,14 +276,12 @@ all &= run('手机 dpr=3 全貌', 13.6, e => {
         || Math.abs(a.lon - b.lon) > 1e-9 || Math.abs(a.lat - b.lat) > 1e-9
         || Math.abs(a.areaM2 - b.areaM2) > 0.01) { diff++; diffs.push(`${a.id} ${a.name}: web=${a.areaText} app=${b.areaText}`); }
   }
-  // 已知滞后白名单：App 包内 idle_factories.json 落后台账一次改动
-  // （if-26 国林四期50号 8339.49→8339.47，App 下轮跑 .build_idle_factories.py 重生成即平）。
-  // Web 忠于当前台账，此处只允许这一处差异。
-  const knownLag = diffs.length === 1 && diffs[0].startsWith('if-26 ');
-  const ok = fac && fac.stats.total === 25 && diff <= 1 && knownLag
+  // v0.3.2：白名单作废 —— App 侧已按新台账重跑 .build_idle_factories_v8.py，
+  // if-26 国林四期 8339.49→8339.47 的滞后已平，两条路现在必须**逐条全等**。
+  const ok = fac && fac.stats.total === 25 && diff === 0
       && fac.factories[0].id.startsWith('if-')
       && fac.factories.every(f => f.lon > 130 && f.lon < 132.5 && f.lat > 43.5 && f.lat < 45.5);
-  console.log(`${ok ? 'PASS' : 'FAIL'}  闲置厂房解析: ${fac.stats.total} 条（基准 25）· 与 App 包内 JSON 差异 ${diff} 处（白名单 if-26 面积滞后）· 跳过无坐标 ${fac.stats.skippedNoCoord}`);
+  console.log(`${ok ? 'PASS' : 'FAIL'}  闲置厂房解析: ${fac.stats.total} 条（基准 25）· 与 App 包内 JSON 差异 ${diff} 处（要求 0）· 跳过无坐标 ${fac.stats.skippedNoCoord}`);
   all &= ok;
 }
 

@@ -27,6 +27,9 @@ local.properties
 daolu.kml
 xianzhidikuai.kml
 
+# Excel 打开时生成的锁文件（临时，勿入仓）
+~$*
+
 # 构建与验证日志
 build-v*.log*
 sim-v*.txt

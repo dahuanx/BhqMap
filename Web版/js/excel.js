@@ -5,9 +5,10 @@
  * 输出：{ enterprises, stats }，stats={total,full,shortonly,withcoord,nocoord,dupGroups}
  *
  * 列号（1-based，与 rebuild 脚本一致）：
- *   C2=全称  D=简称  E=lon  F=lat
- *   G=规模以上  H=协作区  I=园区  J=重点  K=行政
- *   N13=简介
+ *   B2=全称  C=简称  D=lon  E=lat
+ *   F=规模以上  G=协作区  H=园区  I=重点  J=行政
+ *   L=主营业务（v0.3.2 起落字段，此前台账该列全空故写死空串）  M13=简介
+ *   （旧注释「C2=全称 / N13=简介」是笔误 —— 1-based 13 是 M 列；移植口径认代码不认注释）
  *
  * 规则（逐条对照脚本）：
  *   - id = td-<台账行号>（行号稳定键，不复用）；
@@ -67,7 +68,8 @@ function parseLedgerWorkbook(XLSX, wb) {
     const entry = {
       id: `td-${r}`,
       name: display,
-      mainBusiness: '',
+      /* v0.3.2：主营业务（L 列）照读，与 App LedgerParser 同口径 */
+      mainBusiness: ledgerStr(get(12)),
       intro: ledgerStr(get(13)),
       aboveScale: ledgerYes(get(6)),
     };

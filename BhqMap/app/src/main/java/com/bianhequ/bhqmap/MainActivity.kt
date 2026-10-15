@@ -172,6 +172,16 @@ import java.util.zip.ZipException
  *       口径与 Web 完全一致：id=td-/if-<行号>、坐标 130~132.5/43.5~45.5、
  *       判真「是/Y/y/true/True/1」、同点位 1e-6 只提示不合并；
  *       期望统计已用 `.sim_import_mirror.py` 镜像锚定（164/154/10/厂房 25）。
+ * v0.8.1：按新台账（边合区企业台账+1.xlsx，2026-10-15）更新数据 —— 种子 v8。
+ *       条目数/坐标/五个标记列/闲置厂房表均无变化（164 / 可上图 154 / 无坐标 10），
+ *       变的是内容：**主营业务首次有数据（96 条）** → 详情页「主营业务」栏首次亮出
+ *       （v0.4 起本就有"空则整栏隐藏"的逻辑，无需改 UI）；**简介 5 条 → 102 条**；
+ *       5 处企业名称订正（鸿基→洪基包装 等，行号不变）。
+ *       配套修一处口径缺口：[LedgerParser] 此前把 mainBusiness 写死空串（生成种子时
+ *       该列全空），导入路径同样丢这一栏 —— 改为读 L 列，与种子脚本、Web 版 excel.js
+ *       三方同口径。闲置厂房 JSON 按新台账重跑（数据未变，仅换数据源自证同源）。
+ *       另：详情面板标题去掉「（简称）」后缀（洲哥要求）—— v0.6 加它是为提醒补全称，
+ *       但它紧挨企业名、易被读成名称的一部分，一律只显示名称本身（Web 版同步）。
  * 后续：搜索筛选导出、恢复内置数据入口。
  */
 class MainActivity : AppCompatActivity() {
@@ -1243,8 +1253,11 @@ class MainActivity : AppCompatActivity() {
     // ------------------------------------------------------------------
 
     private fun showEnterprisePanel(e: Enterprise) {
-        // 台账只填了简称的条目，名称后标注出来，提醒去补全称（不影响其他显示）
-        binding.tvEntName.text = if (e.nameIsShort) "${e.name}（简称）" else e.name
+        // v0.8.1：去掉标题后的「（简称）」后缀（洲哥要求）。
+        // 该后缀自 v0.6 起用于提醒"台账全称列留空、待补"，但面板里它紧挨企业名，
+        // 看着像名称的一部分，且与"名称待补全"的提示意图重复 → 一律只显示名称本身。
+        // nameIsShort 字段本身保留（渲染/搜索口径都依赖它）。
+        binding.tvEntName.text = e.name
 
         val badges = mutableListOf<String>()
         if (e.isGov) badges.add("行政/事业单位")

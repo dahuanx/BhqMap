@@ -365,8 +365,8 @@ document.addEventListener('click', (ev) => {
 const detail = document.getElementById('detail');
 
 function showDetail(e) {
-  document.getElementById('dName').textContent =
-    e.nameIsShort ? `${e.name}（简称）` : e.name;
+  /* v0.3.2：去掉「（简称）」后缀（与 App v0.8.1 同步）—— 只显示名称本身 */
+  document.getElementById('dName').textContent = e.name;
 
   const badges = [];
   if (e.isGov)   badges.push('<span class="badge b-gov">行政/事业单位</span>');

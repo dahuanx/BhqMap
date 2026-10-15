@@ -124,7 +124,7 @@ const CFG = {
 };
 
 /** Web 版本号（独立于安卓版演进，从 v0.1.0 起） */
-const WEB_VERSION = 'v0.3.1';
+const WEB_VERSION = 'v0.3.2';
 
 /** 版权信息页文案（dialog_about.xml 定稿原文，v0.7.30） */
 const ABOUT_TEXT = {
