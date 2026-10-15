@@ -113,11 +113,19 @@
          原 marginEnd=14dp / marginBottom=10dp 拆成「2dp 外边距 + 12dp / 11dp 内边距」，
          文字的屏上位置几乎不动（右 14dp 不变、下 10→11dp），但手指够得着了。
          不加可见的"可点击"提示：右下角一行小字本来就是给"想看版本的人"看的，
-         知道要点的人自然会点，不知道的人也不需要被这行字吸引注意力。 -->
+         知道要点的人自然会点，不知道的人也不需要被这行字吸引注意力。
+
+         v0.9.1 起在文字右侧挂一个 6dp 红点：有新版时点亮（见 refreshUpdateDot）。
+         XML 里默认挂的是**同尺寸透明占位**而不是索性不挂 —— TextView 是
+         wrap_content 且右对齐，不挂的话红点点亮的一瞬间文字会向左跳 12dp
+         （6dp 点 + 6dp 间距），右下角一行小字忽然挪位置，看着像闪了一下。
+         挂占位则恒定占宽，红点只是"亮/灭"，文字从头到尾钉在原地。 -->
     <TextView
         android:id="@+id/tvVersion"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:drawableEnd="@drawable/dot_update_placeholder"
+        android:drawablePadding="6dp"
         android:layout_marginEnd="2dp"
         android:layout_marginBottom="0dp"
         android:paddingStart="12dp"

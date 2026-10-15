@@ -412,6 +412,16 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_UPDATE_SNOOZE = "snooze_until"
         private const val KEY_DATA_DECLINED = "data_declined_version"
 
+        /**
+         * 已知有新版时记下的版本号与版本名（v0.9.1）。
+         *
+         * 落盘而不是只留一个内存变量：检查是启动 1.8 秒后才异步跑的，而且用户
+         * 可能选「稍后提醒」把对话框关掉 —— 红点必须能跨重启继续亮着，否则它
+         * 就跟弹框一样，被关一次就彻底消失了，等于白做。
+         */
+        private const val KEY_PENDING_CODE = "pending_version_code"
+        private const val KEY_PENDING_NAME = "pending_version_name"
+
         /** 启动后延迟多久做静默检查：等地图与数据先就位，不抢首屏 */
         private const val UPDATE_CHECK_DELAY_MS = 1800L
 
@@ -551,6 +561,10 @@ class MainActivity : AppCompatActivity() {
         // 放在这个位置的用意：版本号是所有 App 里"关于/版权"的既成入口，
         // 用户不必被教；而这一页也不是高频功能，不需要占一个悬浮按钮。
         binding.tvVersion.setOnClickListener { showAboutDialog() }
+
+        // 有新版时点亮版本号旁的红点（v0.9.1）。冷启动就先按本机记录画一遍，
+        // 不等那 1.8 秒后的网络检查 —— 上次已知有新版，这次开机就该看得见。
+        refreshUpdateDot()
     }
 
     /**
@@ -1214,8 +1228,22 @@ class MainActivity : AppCompatActivity() {
 
         view.findViewById<View>(R.id.btnAboutClose).setOnClickListener { dialog.dismiss() }
 
-        // 检查更新（v0.9.0）：手动路径，绕过「每日一次」与「稍后提醒」的限制
-        view.findViewById<View>(R.id.btnAboutCheckUpdate).setOnClickListener {
+        // 检查更新（v0.9.0）：手动路径，绕过「每日一次」与「稍后提醒」的限制。
+        //
+        // v0.9.1 起，本机已记下待更新版本时把文案换成「有新版本 vX 可用」并转成
+        // 提示红（与右下角红点同色）。进这一页的人多半就是想弄明白「到底有没有更新」，
+        // 既然答案已经有了，就不该让他再点一次才看到。
+        val btnCheck = view.findViewById<TextView>(R.id.btnAboutCheckUpdate)
+        val aboutPrefs = getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+        val pendingCode = aboutPrefs.getInt(KEY_PENDING_CODE, 0)
+        val pendingName = aboutPrefs.getString(KEY_PENDING_NAME, "").orEmpty()
+        if (pendingCode > BuildConfig.VERSION_CODE && pendingName.isNotBlank()) {
+            btnCheck.text = "有新版本 v$pendingName 可用"
+            btnCheck.setTextColor(getColor(R.color.update_dot))
+            // 长句不收字距会松得散架（XML 里 0.1 是给四字标题调的）
+            btnCheck.letterSpacing = 0.02f
+        }
+        btnCheck.setOnClickListener {
             dialog.dismiss()
             checkUpdate(manual = true)
         }
@@ -1270,16 +1298,57 @@ class MainActivity : AppCompatActivity() {
                 }
                 handleDataUpdate(manifest, prefs)
                 if (manifest.hasApk && manifest.isNewerThan(BuildConfig.VERSION_CODE)) {
+                    setPendingVersion(manifest.versionCode, manifest.versionName)
                     showUpdateDialog(manifest)
-                } else if (manual) {
-                    Toast.makeText(
-                        this,
-                        "当前已是最新版本 v${BuildConfig.VERSION_NAME}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                } else {
+                    // 两种"没有新版"都走这里：清单确实没有更新，或用户已经装上新版。
+                    // 两种都该把红点灭掉。清单拉不到（manifest == null）时上面就早退了，
+                    // 红点维持原状 —— 断网不等于没有新版。
+                    setPendingVersion(0, "")
+                    if (manual) {
+                        Toast.makeText(
+                            this,
+                            "当前已是最新版本 v${BuildConfig.VERSION_NAME}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }.start()
+    }
+
+    /**
+     * 按本机记下的「待更新版本」点亮或熄灭右下角版本号旁的红点（v0.9.1）。
+     *
+     * 每次现读 SharedPreferences 而不缓存成字段：红点要在冷启动、检查返回、
+     * 进版权页三个时机保持一致，都从同一个源头取值最不容易写歪 —— 这个点本身
+     * 只有 6dp，写法上再省一步，出问题就没人看得出是哪儿不对。
+     */
+    private fun refreshUpdateDot() {
+        val pending = getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_PENDING_CODE, 0)
+        binding.tvVersion.setCompoundDrawablesRelativeWithIntrinsicBounds(
+            0,
+            0,
+            if (pending > BuildConfig.VERSION_CODE) R.drawable.dot_update
+            else R.drawable.dot_update_placeholder,
+            0
+        )
+    }
+
+    /**
+     * 记下「已知有新版」并同步红点；[code] 传 0 表示清除（已是最新）。
+     *
+     * 与弹框的分工：弹框是主动打扰一次，红点是被动提示一直挂着。
+     * 「稍后提醒」只关弹框、不动红点 —— 用户把框关掉之后，右下角那点红
+     * 就是唯一的提醒，这正是它存在的意义。
+     */
+    private fun setPendingVersion(code: Int, name: String) {
+        getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE).edit()
+            .putInt(KEY_PENDING_CODE, code)
+            .putString(KEY_PENDING_NAME, name)
+            .apply()
+        refreshUpdateDot()
     }
 
     /**

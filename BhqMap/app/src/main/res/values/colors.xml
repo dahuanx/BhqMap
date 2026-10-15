@@ -97,6 +97,12 @@
     <color name="about_section">#FFD9B95C</color>      <!-- 卡片小标题：沙金 —— 与浮层标题、协作区标签同色同源 -->
     <color name="about_btn_line">#47F2F0E6</color>     <!-- 关闭按钮描边：28% 卡其白（不是白 —— 与全页暖调一致） -->
 
+    <!-- 更新提示红（v0.9.1）：全工程唯一的红，专用于"有新版本"这一个语义 ——
+         右下角版本号旁的红点，以及版权页按钮在有新版时的文字色。
+         取 #FF3B30 而不是更深的 #C62828：红点只有 6dp，深红在深绿植被与
+         灰蓝建筑为主的卫星底图上会糊成一团，这个亮度才是"一眼看见"。 -->
+    <color name="update_dot">#FFFF3B30</color>
+
     <!-- 比例尺 / 指北针：与按钮系统同一块玻璃底 -->
     <color name="scalebar_bg">#99141608</color>
     <color name="scalebar_fg">#FFF2F0E6</color>

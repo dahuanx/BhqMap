@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 更新红点的占位（v0.9.1）：与 dot_update 同为 6dp 的透明圆。
+     为什么要它：TextView 是 wrap_content 且右对齐，如果「没有新版」时压根不挂
+     drawable，那么检查到新版的瞬间版本号会向左跳 12dp（6dp 点 + 6dp 间距）——
+     右下角一行小字突然挪位置，看着像闪了一下。挂同尺寸透明占位就恒定占宽，
+     文字从头到尾钉在原地，红点出现/消失只是"点亮"与"熄灭"。
+
+     XML 里默认挂的就是它（无点状态），运行时由 refreshUpdateDot 决定换成真的红点。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@android:color/transparent" />
+    <size
+        android:width="6dp"
+        android:height="6dp" />
+</shape>

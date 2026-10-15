@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 更新提示红点（v0.9.1）：6dp 实心圆，挂在右下角版本号的 drawableEnd 上。
+     有新版时显示，由 MainActivity.refreshUpdateDot 按 SharedPreferences 里的
+     待更新版本号切换；「稍后提醒」关掉对话框后它仍然留着 —— 那正是它的用处。
+
+     红色不在《视觉规范》的既有色板里，是 v0.9.1 专为「有新版本」新开的语义色
+     （见 colors.xml 的 update_dot）。选它是因为要在卫星底图上跳出：底图常年是
+     深绿植被与灰蓝建筑，唯一能一眼分辨的就是红。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/update_dot" />
+    <size
+        android:width="6dp"
+        android:height="6dp" />
+</shape>
