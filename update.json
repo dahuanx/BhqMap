@@ -9,9 +9,9 @@
   "data": {
     "version": 8,
     "source": "边合区企业台账+1.xlsx",
-    "enterprisesUrl": "https://gitee.com/dahuanxx/BhqMap/raw/master/data/enterprises-v8.json",
+    "enterprisesUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/data-v8/enterprises-v8.json",
     "enterprisesSha256": "bf111f085f9797adaf1757db47ae1f30eb205745f9e625f5451d08eca3936c6e",
-    "factoriesUrl": "https://gitee.com/dahuanxx/BhqMap/raw/master/data/idle_factories-v8.json",
+    "factoriesUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/data-v8/idle_factories-v8.json",
     "factoriesSha256": "79da6cefa316832fb2ecd983a42142e1b4795b26ce461f74feee4f85e1afd520"
   },
   "releasedAt": "2026-10-15"
