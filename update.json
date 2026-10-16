@@ -7,12 +7,12 @@
   "apkSha256": "a4db4d82de3f77b27e82f980f27bb3e34a948dbc44b78b9d8b2fa833c2b1275d",
   "notes": "构建日期：2026-10-15　|　versionCode 42\n\n· 有新版本时，右下角版本号旁会亮一个红点，一眼就能看见，不必每次都去版权页点「检查更新」。\n· 红点跨重启保留：选了「稍后提醒」把对话框关掉之后，红点仍然亮着，7 天内随时提醒你还有新版没装。\n· 联网检查到已是最新（或你已装上新版）时红点自动熄灭；断网时红点保持原状——连不上不等于没有新版。\n· 红点只是提示，不改变操作：点版本号仍然是打开版权页，升级入口没有变化。\n\n· 已知有新版时，版权页那行「检 查 更 新」直接变成 「有新版本 v0.9.1 可用」并转为提示红，进页面就能看到答案，不用再点一次。\n· 没有新版时文案与颜色保持原样。",
   "data": {
-    "version": 8,
-    "source": "边合区企业台账+1.xlsx",
-    "enterprisesUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/data-v8/enterprises-v8.json",
-    "enterprisesSha256": "bf111f085f9797adaf1757db47ae1f30eb205745f9e625f5451d08eca3936c6e",
-    "factoriesUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/data-v8/idle_factories-v8.json",
-    "factoriesSha256": "79da6cefa316832fb2ecd983a42142e1b4795b26ce461f74feee4f85e1afd520"
+    "version": 9,
+    "source": "边合区企业台账.xlsx",
+    "enterprisesUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/data-v9/enterprises-v9.json",
+    "enterprisesSha256": "d91edf9d8588142e44bb8a2dea73d4da5718baaad10501e96596de6541b050ea",
+    "factoriesUrl": "https://gitee.com/dahuanxx/BhqMap/releases/download/data-v9/idle_factories-v9.json",
+    "factoriesSha256": "685abe578a4e1d5eb1f0c6060119254788fc67328eaa6f98f1e6951fc3355520"
   },
-  "releasedAt": "2026-10-15"
+  "releasedAt": "2026-10-16"
 }
