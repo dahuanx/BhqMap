@@ -1296,21 +1296,41 @@ class MainActivity : AppCompatActivity() {
                     }
                     return@runOnUiThread
                 }
-                handleDataUpdate(manifest, prefs)
-                if (manifest.hasApk && manifest.isNewerThan(BuildConfig.VERSION_CODE)) {
+                // 安装包与台账是两条独立的更新线，可能同时有新版。两个框都弹会叠成两层，
+                // 用户得先处理上面那个再处理下面那个 —— 所以先让数据处理完"不需要弹框的
+                // 部分"（静默同步照旧立即做），需要用户点头的确认框交给安装包对话框关闭后
+                // 再弹。一次只面对一件事。
+                val hasApk = manifest.hasApk && manifest.isNewerThan(BuildConfig.VERSION_CODE)
+                val dataOutcome = handleDataUpdate(
+                    manifest, prefs, manual = manual, deferDialog = hasApk
+                )
+                if (hasApk) {
                     setPendingVersion(manifest.versionCode, manifest.versionName)
-                    showUpdateDialog(manifest)
+                    showUpdateDialog(manifest) {
+                        // 安装包那一框关掉了，接着把押后的台账确认框补上
+                        if (dataOutcome == DataOutcome.ASKING) {
+                            handleDataUpdate(manifest, prefs, manual = true, deferDialog = false)
+                        }
+                    }
                 } else {
                     // 两种"没有新版"都走这里：清单确实没有更新，或用户已经装上新版。
                     // 两种都该把红点灭掉。清单拉不到（manifest == null）时上面就早退了，
                     // 红点维持原状 —— 断网不等于没有新版。
                     setPendingVersion(0, "")
                     if (manual) {
-                        Toast.makeText(
-                            this,
-                            "当前已是最新版本 v${BuildConfig.VERSION_NAME}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        // 手动检查的回话要跟台账侧的实际结果对上，不能说一句笼统的
+                        // "已是最新版本"把台账那件事盖过去（v0.9.2 修的就是这个：
+                        // 弹框被"保持现状"记录挡住时，用户只看到软件最新，误以为无事可做）
+                        val reply = when (dataOutcome) {
+                            // 台账确认框已经弹出来了，它就是回话，别再盖一句
+                            DataOutcome.ASKING -> null
+                            DataOutcome.SKIP_USER_DATA ->
+                                "软件已是最新版；台账以本机导入的为准，未使用内置台账"
+                            else -> "当前已是最新版本 v${BuildConfig.VERSION_NAME}"
+                        }
+                        if (reply != null) {
+                            Toast.makeText(this, reply, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
@@ -1351,41 +1371,80 @@ class MainActivity : AppCompatActivity() {
         refreshUpdateDot()
     }
 
+    /** 一次数据检查的落点 —— 供 [checkUpdate] 决定要不要再补一句回话 */
+    private enum class DataOutcome {
+        /** 不需要处理，或已静默同步完 */
+        NONE,
+
+        /** 需要用户点头：确认框已弹，或按 [deferDialog] 押后到安装包对话框关闭之后 */
+        ASKING,
+
+        /** 本机台账是用户自己导入的，这一版内置台账让路 */
+        SKIP_USER_DATA
+    }
+
     /**
      * 台账数据热更新：能静默就静默，需要用户点头才弹框。
      *
      * 三种处置对应数据来源三态（判据与理由见 update/DataSync.kt 的类注释）：
      *   内置 / 上次同步来的        → 直接换，用户无感
-     *   来源不明（v0.8.1 及更早）  → 问一次；选了「保持现状」就记下版本，不再重复问
+     *   来源不明（v0.8.1 及更早）  → 问一次；选了「保持现状」就不再静默重复问
      *   用户机内导入的             → 一个字都不说，让路
+     *
+     * ## 手动检查为什么必须放行（v0.9.2 修）
+     *
+     * 「保持现状」记的是"这一版别替换我的台账"，不是"以后永远别问我"。
+     * v0.9.1 把这条记录同时套在静默与手动两条路径上，结果是：用户点了保持现状，
+     * 想反悔时再点「检查更新」，框根本不再出现、只回一句"当前已是最新版本"——
+     * 除非他有 Excel 重新导入一次，否则没有任何办法拿到新台账。这不合理，
+     * 也与安装包侧的处理不一致（那边的「稍后提醒」只管静默路径，手动检查一律绕过）。
+     *
+     * 所以现在的判据是：**手动检查一律放行，静默检查才看记录**。
+     *
+     * @param deferDialog true 表示这次先不弹框，只把"要问"这件事报回去
+     *                    （安装包对话框正在前台时用，避免两框相叠）
      */
-    private fun handleDataUpdate(manifest: UpdateManifest, prefs: SharedPreferences) {
-        when (DataSync.evaluate(store, manifest)) {
-            DataSync.Decision.SHOULD_UPDATE -> Thread {
-                val result = DataSync.apply(store, IdleFactoryStore(this), manifest)
-                runOnUiThread {
-                    if (result.ok) {
-                        // 与机内导入后的刷新路径一致：dataProvider 每帧取值，
-                        // 重新赋字段 + invalidate 就能让全部图层换数据，无需重建 overlay
-                        enterprises = store.load()
-                        idleFactories = IdleFactoryStore(this).load()
-                        binding.map.invalidate()
-                        Log.i(TAG, "台账数据已同步至第 ${manifest.dataVersion} 版：${result.detail}")
-                    } else {
-                        Log.w(TAG, "台账数据同步失败：${result.detail}")
+    private fun handleDataUpdate(
+        manifest: UpdateManifest,
+        prefs: SharedPreferences,
+        manual: Boolean,
+        deferDialog: Boolean
+    ): DataOutcome {
+        return when (DataSync.evaluate(store, manifest)) {
+            DataSync.Decision.SHOULD_UPDATE -> {
+                Thread {
+                    val result = DataSync.apply(store, IdleFactoryStore(this), manifest)
+                    runOnUiThread {
+                        if (result.ok) {
+                            // 与机内导入后的刷新路径一致：dataProvider 每帧取值，
+                            // 重新赋字段 + invalidate 就能让全部图层换数据，无需重建 overlay
+                            enterprises = store.load()
+                            idleFactories = IdleFactoryStore(this).load()
+                            binding.map.invalidate()
+                            Log.i(TAG, "台账数据已同步至第 ${manifest.dataVersion} 版：${result.detail}")
+                        } else {
+                            Log.w(TAG, "台账数据同步失败：${result.detail}")
+                        }
                     }
-                }
-            }.start()
+                }.start()
+                DataOutcome.NONE
+            }
 
-            DataSync.Decision.NEED_CONFIRM ->
-                if (prefs.getInt(KEY_DATA_DECLINED, 0) < manifest.dataVersion) {
-                    showDataUpdateDialog(manifest, prefs)
+            DataSync.Decision.NEED_CONFIRM -> {
+                if (manual || prefs.getInt(KEY_DATA_DECLINED, 0) < manifest.dataVersion) {
+                    if (!deferDialog) showDataUpdateDialog(manifest, prefs)
+                    DataOutcome.ASKING
+                } else {
+                    DataOutcome.NONE
                 }
+            }
 
-            DataSync.Decision.SKIP_USER_DATA ->
+            DataSync.Decision.SKIP_USER_DATA -> {
                 Log.i(TAG, "本机台账为机内导入，跳过内置数据同步（第 ${manifest.dataVersion} 版）")
+                DataOutcome.SKIP_USER_DATA
+            }
 
-            DataSync.Decision.UP_TO_DATE -> Unit
+            DataSync.Decision.UP_TO_DATE -> DataOutcome.NONE
         }
     }
 
@@ -1396,8 +1455,14 @@ class MainActivity : AppCompatActivity() {
         return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    /** 安装包更新对话框 */
-    private fun showUpdateDialog(manifest: UpdateManifest) {
+    /**
+     * 安装包更新对话框。
+     *
+     * [onClosed] 在这一框真正关闭之后回调（点框外、返回键、稍后提醒都算），
+     * 用来接着处理押后的台账确认框；走"立即更新"进下载流程则不回调 ——
+     * 用户已经决定动手了，这时再弹一个框问他台账，只会挡住进度。
+     */
+    private fun showUpdateDialog(manifest: UpdateManifest, onClosed: () -> Unit) {
         val view = layoutInflater.inflate(R.layout.dialog_update, null)
         view.findViewById<TextView>(R.id.tvUpdateTitle).text = "发现新版本"
         view.findViewById<TextView>(R.id.tvUpdateVer).text =
@@ -1414,6 +1479,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         val dialog = createUpdateDialog(view)
+        // 关闭路径有三条，用监听器统一收口比在每处各写一行可靠
+        var downloading = false
+        dialog.setOnDismissListener { if (!downloading) onClosed() }
+
         view.findViewById<View>(R.id.btnUpdateLater).setOnClickListener {
             // 七天后再提。手动检查不受此限制 —— 不是"关掉就再也收不到"
             getSharedPreferences(UPDATE_PREFS, Context.MODE_PRIVATE).edit()
@@ -1423,6 +1492,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "已改为 7 天后提醒", Toast.LENGTH_SHORT).show()
         }
         view.findViewById<View>(R.id.btnUpdateNow).setOnClickListener {
+            downloading = true
             startDownload(view, dialog, manifest)
         }
     }
@@ -1445,7 +1515,7 @@ class MainActivity : AppCompatActivity() {
             }
             append("。\n\n本机现有台账的来源无法确认（由早期版本写入），")
             append("同步会用新版内置台账替换它。如果你在这台手机上手动导入过自己的台账")
-            append("并且要保留，请选「保持现状」，之后可在显示控制浮层里重新导入。")
+            append("并且要保留，请选「保持现状」——随时可在版权页点「检查更新」再同步。")
         }
         view.findViewById<TextView>(R.id.tvUpdateMeta).text = "数据文件很小，通常一两秒即可完成"
 
@@ -1454,9 +1524,14 @@ class MainActivity : AppCompatActivity() {
         view.findViewById<TextView>(R.id.btnUpdateNow).text = "同步数据"
 
         view.findViewById<View>(R.id.btnUpdateLater).setOnClickListener {
-            // 记住"这一版不再问"，避免每次启动都弹同一个框
+            // 记住"这一版不再静默打扰"。注意这条记录**只管静默路径** ——
+            // 用户主动点「检查更新」时这一框会重新出现（见 handleDataUpdate 的 manual 判据），
+            // 否则选了保持现状就等于永久锁死在第 N-1 版台账上，没有回头路。
             prefs.edit().putInt(KEY_DATA_DECLINED, manifest.dataVersion).apply()
             dialog.dismiss()
+            Toast.makeText(
+                this, "已保持现状；需要同步时可在版权页点「检查更新」", Toast.LENGTH_LONG
+            ).show()
         }
         view.findViewById<View>(R.id.btnUpdateNow).setOnClickListener {
             dialog.dismiss()

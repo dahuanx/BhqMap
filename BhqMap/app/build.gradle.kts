@@ -23,8 +23,8 @@ android {
         applicationId = "com.bianhequ.bhqmap"
         minSdk = 26
         targetSdk = 34
-        versionCode = 42
-        versionName = "0.9.1"
+        versionCode = 43
+        versionName = "0.9.2"
 
         // 注入到 BuildConfig.TIANDITU_TK
         buildConfigField("String", "TIANDITU_TK", "\"$tiandituTk\"")
